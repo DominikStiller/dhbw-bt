@@ -1,7 +1,86 @@
-CEP
-Eventtypen + DEfinitionen
-Ideas from functional programming for scalability
-geoevents
+batch processing for a couple of years
+easy to reason about completeness since it is bounded
+latency usually not an issue
 
+\section{Streaming Data}
+properties: unbounded, unordered, varying event time skew
+stream vs table
+
+concepts of event time and processing time
+analysis of data based on when they are observed as opposed to when they occur is usually not sufficient
+need to handle event time separately
+need to define measure of completeness to maximize correctness
+different methods for handling late data: retract old results, separate output, dismiss
 tradeoff completeness vs latency
 
+\section{Stream Processing}
+short history
+
+stream processing patterns~\cite[p.~35]{Akidau.2018}:
+\begin{description}
+	\item[Time-Agnostic] very simple because no reasoning about time, only logic-based on single record, like filtering or inner join
+	\item[Approximation] complicated algorithms like streaming k-means, some with provable error bounds
+	\item[Windowing] chopping up stream into bounded datasets
+\end{description}
+
+partition by key
+
+batch can be processed with streaming system
+explanation of a true streaming use case~\cite[p.~386]{Akidau.2018}
+\cite{Akidau.2018}
+\cite{Kleppmann.2016}
+\cite{Hedtstuck.2017}
+
+\subsection{Windowing}
+division of unbounded stream in bounded segments
+can be arbitrary, but usually time or count
+will focus on time, since count is effectively processing time
+fixed, sliding, session, fixed is special case of sliding window
+
+based on processing time: simple and perfect measure of completeness, applicable in many cases where observation time is desired
+
+based on event time: required when event time is desired, requires more buffering than processing time, usually no perfect measure of completeness, therefore based on heuristic
+
+triggers
+watermarks as heuristic, show different options
+difference between watermark and allowed lateness
+
+several aggregations over window
+
+\section{Stream Transport}
+message queue (Rabbitmq), often ephemeral
+plain socket stream
+pubsub
+append-only immutable log with persistency
+
+Motivation~\cite[p.~29~f.]{Kleppmann.2016}:
+\begin{itemize}
+	\item Loose coupling
+	\item Scalability
+	\item Schema flexibility
+\end{itemize}
+
+present Kafka
+
+
+\section{Event-Driven}
+event types and definitions
+event type vs event instance
+
+event happens in an instant
+complex events are multiple events in correlated according to a pattern (have a duration)
+composite event would be more fitting, but complex event is prevailing term
+
+event driven types
+event notification
+event sourcing
+event-carried state transfer
+
+geoevents
+
+
+\section{Complex Event Processing}
+pattern recognition performed on event streams
+seit sql:2016 auch iso standard
+
+selection of events to evaluate by window or consumption mode
