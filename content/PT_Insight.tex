@@ -1,0 +1,91 @@
+Looked for interesting use case which we can use to experiment with stream processing
+aspects: correct, fault-tolerant, low-latency and scalable
+Wanted to use real data
+
+
+
+\section{Use Case}
+\subsection{HSL API Data}
+Available data
+statistics
+
+\subsection{Analytics}
+wanted to have analytics with challenges in different areas: pattern recognition, external queries
+
+\subsection{Geoaggregation}
+Division in cells
+
+late data handling
+watermark bounded out of orderness time vs allowed lateness is a tradeoff between latency and recomputation effort
+if only interested in latest window results: allowed lateness = window evaluation time
+late side output if fine-grained handling required
+but often if delayed: delayed much longer than allowed lateness, e.g. if bus is in tunnel instead of just small transmission delay
+
+
+
+\section{Design}
+\subsection{Architecture}
+separate clusters for ingest, streaming, processing and ui
+decoupling of ingestion and processing with persistent event log in between has benefits
+\begin{itemize}
+	\item handle backpressure without data loss
+	\item decouple ingest and processing -> other processing possible
+	\item replay in case of failure because not ephemeral
+\end{itemize}
+
+
+\subsection{Event Schema}
+common schema, serialized as protobuf for strong typing but still allow flexible payload with any
+show all definitions in appendix
+for larger cases, should use central schema registry like supported by confluent
+
+
+\subsection{Ingestion}
+Extensible design with ingestors and processors
+
+
+\subsection{Flink Jobs}
+describe common functions (key selectors)
+
+job design considerations:
+\begin{itemize}
+	\item large sliding window with short period requires lots of memory
+	\item High allowed lateness increases time until records can be garbage collected
+	\item Accumulation functions only need to store a single value instead of all like in process function (aggregate early)
+	\item only send relevant data to downstream tasks since data needs to be serialized, transferred and duplicates (for windows and CEP)
+	\item state size influences checkpointing time
+	\item watermarking and late data based on statistics (expected delay)
+	\item checkpointing frequency
+	\item retention period
+	\item parallelism vs core/n_workers
+	\item caching for asnyc functions (show numbers, 5 req/s instead of 800 req/s)
+\end{itemize}
+
+
+\subsection{Latency Tracking}
+processing latency reasons:
+reasons for latency: https://flink.apache.org/news/2019/02/25/monitoring-best-practices.html\#monitoring-latency
+configuration can tradeoff latency vs throughput
+not the same as stream latency caused by waiting for watermark
+
+
+\subsection{Volume Scaling}
+part of ingest
+use recording and replay multiple times
+each replay in separate process with two threads: s3 reader and kafka producer
+payload adjustment
+
+
+
+\section{Data Flow Example}
+
+
+
+\section{Deployment}
+\subsection{Server Considerations}
+capacity planning: https://www.ververica.com/blog/how-to-size-your-apache-flink-cluster-general-guidelines
+
+
+\subsection{Automation}
+immutable infrastructure (relevant?)
+

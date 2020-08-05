@@ -29,8 +29,10 @@
 		\input{content/Abstract}
 	\end{abstract}
 
-	\setlength{\cftbeforetoctitleskip}{2.1em}
-	\begin{spacing}{1.15}
+	% \setlength{\cftbeforetoctitleskip}{2.1em}
+	% \begin{spacing}{1.15}
+	\setlength{\cftbeforetoctitleskip}{0em}
+	\begin{spacing}{1.0}
 	   \tableofcontents
 	\end{spacing}
 	\clearpage
@@ -44,15 +46,15 @@
 	\printacronyms
 	\clearpage
 	
-	\addcontentsline{toc}{chapter}{\listfigurename}
+	% \addcontentsline{toc}{chapter}{\listfigurename}
 	\listoffigures
 	\clearpage
-	\addcontentsline{toc}{chapter}{\listtablename}
+	% \addcontentsline{toc}{chapter}{\listtablename}
 	\listoftables
 	\clearpage
 	\include{misc/symbols}
 	\renewcommand\listoflistingscaption{List of Source Codes}
-	\listoflistings
+	% \listoflistings
 	\printnomenclature
 	\clearpage
 	
@@ -60,7 +62,7 @@
 	
 	\pagestyle{headings}
 	
-	\addtocontents{toc}{\protect\thispagestyle{empty}}
+	% \addtocontents{toc}{\protect\thispagestyle{empty}}
 	%----------------------------------------------------------------------------
 	% Content
 	%----------------------------------------------------------------------------
@@ -69,10 +71,8 @@
 	\input{content/Introduction}
 	\chapter{Background}
 	\input{content/Background}
-	\chapter{Design}
-	\input{content/Design}
-	\chapter{Implementation}
-	\input{content/Implementation}
+	\chapter{Proof-of-Concept Solution}
+	\input{content/PT_Insight}
 	\chapter{Evaluation}
 	\input{content/Evaluation}
 	\chapter{Conclusion}

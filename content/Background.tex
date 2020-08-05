@@ -1,22 +1,48 @@
+\section{Batch Processing}
 batch processing for a couple of years
+processing of complete, bounded dataset, e.g. once per day
+many jobs have same structure, therefore mapreduce/hadoop enables fault tolerance and scalability with common programming model
+Flume extended simple model with support for optimized complex pipelines
+
 easy to reason about completeness since it is bounded
+when node fails, simply restart on other nodes
 latency usually not an issue
 
-\section{Streaming Data}
+falls short e.g. with session windows
+high latency
+
+
+
+\section{Stream Processing}
+
+
+\subsection{Streaming Data Properties}
 properties: unbounded, unordered, varying event time skew
 stream vs table
+
+streams are natural for many data
+even many batch processing applications only use batch because of a lack of digitalization~\cite[p.~29]{Kreps.2014}
 
 concepts of event time and processing time
 analysis of data based on when they are observed as opposed to when they occur is usually not sufficient
 need to handle event time separately
-need to define measure of completeness to maximize correctness
-different methods for handling late data: retract old results, separate output, dismiss
-tradeoff completeness vs latency
+
+event time and processing time often do not coincide
+example: delayed data, fast-forward through historic data
 
 
-\section{Stream Processing}
-short history
+\subsection{Stream Processing Architectures}
+Storm was first widespread stream system but tradedoff correctness for latency
+use lambda for correctness at first
+spark streaming as first large-scale stream processing engine with correctness guarantee for kappa architecture, nut only processing time
 
+correctness needed for stream to get parity with batch, time gets you beyond batch~\cite[p.~28]{Akidau.2018}
+
+instead of chopping up natural streams as in batch processing, embrace characteristics (unbounded) and process stream continuously
+\begin{quote}We propose that a fundamental shift of approach is necessary to deal with these evolved requirements in modern data processing. We as a field must stop trying to groom unbounded datasets into finite pools of information that eventually become complete, and instead live and breathe under the assumption that we will never know if or when we have seen all of our data, only that new data will arrive, old data may be retracted, and the only way to make this problem tractable is via principled abstractions that allow the practitioner the choice of appropriate tradeoffs along the axes of interest: correctness, latency, and cost.~\cite[p.~1792]{TylerAkidau.2015}\end{quote}
+
+
+\subsection{Processing Patterns}
 stream processing patterns~\cite[p.~35]{Akidau.2018}:
 \begin{description}
 	\item[Time-Agnostic] very simple because no reasoning about time, only logic-based on single record, like filtering or inner join
@@ -24,13 +50,33 @@ stream processing patterns~\cite[p.~35]{Akidau.2018}:
 	\item[Windowing] chopping up stream into bounded datasets
 \end{description}
 
-partition by key
+partition by key enables parallelization
 
 batch can be processed with streaming system
 explanation of a true streaming use case~\cite[p.~386]{Akidau.2018}
 \cite{Akidau.2018}
 \cite{Kleppmann.2016}
 \cite{Hedtstuck.2017}
+
+
+\subsection{Event-Time Handling}
+processing time is natural, event time requires special techniques
+need to define measure of completeness to maximize correctness
+different methods for handling late data: retract old results, separate output, dismiss
+tradeoff completeness vs latency
+
+
+\subsection{Stateful Processing}
+\cite[Chapter~7]{Akidau.2018}
+Many applications, especially as complex ones as analytics require state
+e.g. partial matches or intermediate results of aggregations
+
+for batch: assumed that job can be restarted completely when it fails
+for streaming: assume that data might not be replayable from beginning, correctness and efficiency require persistent state
+
+exactly once guarantees for correctness, requires offset and replayable source (at least data since last checkpoint)
+requires explicit state which is known to cluster and can be checkpointed
+
 
 \subsection{Windowing}
 division of unbounded stream in bounded segments
@@ -49,26 +95,46 @@ bounded out of orderness, ascending...
 
 several aggregations over window
 
+
+\subsection{Existing Platforms}
+Flink: async queries, multiple layers of abstraction (datastream, SQL), high availability for master and worker, unit testing
+Beam
+
+
+
+
 \section{Stream Transport}
 message queue (Rabbitmq), often ephemeral
 plain socket stream
 pubsub
+
+
+\subsection{Immutable logs}
 append-only immutable log with persistency
 
-Motivation~\cite[p.~29~f.]{Kleppmann.2016}:
+Reasons~\cite[p.~31]{Kreps.2014}
 \begin{itemize}
-	\item Loose coupling
-	\item Scalability
-	\item Schema flexibility
+	\item flexible consumers, also for debugging
+	\item ordering
+	\item Buffering and isolation, e.g. for backpressure handling and replay on node failure, important prerequisite for robustness and correctness
 \end{itemize}
 
+
+\subsection{Kafka}
 present Kafka
+commercial distributions like confluent provide tiered retention
 
 
-\section{Event-Driven}
+
+\section{Event Processing}
+not based on data shape/cardinality like batch or stream
+rather data element type
+however, often streams of events
+
 event types and definitions
 event type vs event instance
 
+\subsection{Event Driven Architecture}
 event happens in an instant
 complex events are multiple events in correlated according to a pattern (have a duration)
 composite event would be more fitting, but complex event is prevailing term
@@ -81,8 +147,9 @@ event-carried state transfer
 geoevents
 
 
-\section{Complex Event Processing}
+\subsection{Complex Event Processing}
 pattern recognition performed on event streams
 seit sql:2016 auch iso standard
+not bound to stream processing, also e.g. microservices
 
 selection of events to evaluate by window or consumption mode
