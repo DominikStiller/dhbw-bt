@@ -28,7 +28,7 @@ analysis of data based on when they are observed as opposed to when they occur i
 need to handle event time separately
 
 event time and processing time often do not coincide
-example: delayed data, fast-forward through historic data
+example: delayed data (vehicle in tunnel, phones in airplane), fast-forward through historic data
 
 
 \subsection{Stream Processing Architectures}
@@ -41,29 +41,44 @@ correctness needed for stream to get parity with batch, time gets you beyond bat
 instead of chopping up natural streams as in batch processing, embrace characteristics (unbounded) and process stream continuously
 \begin{quote}We propose that a fundamental shift of approach is necessary to deal with these evolved requirements in modern data processing. We as a field must stop trying to groom unbounded datasets into finite pools of information that eventually become complete, and instead live and breathe under the assumption that we will never know if or when we have seen all of our data, only that new data will arrive, old data may be retracted, and the only way to make this problem tractable is via principled abstractions that allow the practitioner the choice of appropriate tradeoffs along the axes of interest: correctness, latency, and cost.~\cite[p.~1792]{TylerAkidau.2015}\end{quote}
 
+batch can be processed with streaming system
+explanation of a true streaming use case~\cite[p.~386]{Akidau.2018}
+
 
 \subsection{Processing Patterns}
 stream processing patterns~\cite[p.~35]{Akidau.2018}:
 \begin{description}
 	\item[Time-Agnostic] very simple because no reasoning about time, only logic-based on single record, like filtering or inner join
 	\item[Approximation] complicated algorithms like streaming k-means, some with provable error bounds
-	\item[Windowing] chopping up stream into bounded datasets
+	\item[Windowing] chopping up stream into bounded datasets, but not necessarily with fixed bounds like in batch but allow arbitrary windows (like session)
 \end{description}
 
-partition by key enables parallelization
 
-batch can be processed with streaming system
-explanation of a true streaming use case~\cite[p.~386]{Akidau.2018}
-\cite{Akidau.2018}
-\cite{Kleppmann.2016}
-\cite{Hedtstuck.2017}
+\subsection{Timely Processing}
+windowing as division of unbounded stream in bounded segments
+can be arbitrary, but usually time or count
+will focus on time, since count is effectively processing time
+fixed, sliding, session, fixed is special case of sliding window
+custom window using window assigner
 
+triggers define result materialization in processing time
+repeated or based on watermarks as measure of completeness
+\begin{quote}Repeated update triggers are great for use cases in which we simply want periodic updates to our results over time and are fine with those updates converging toward correctness with no clear indication of when correctness is achieved.~\cite[p.~63]{Akidau.2018}\end{quote}
 
-\subsection{Event-Time Handling}
+watermarks as heuristic, show different options
+difference between watermark and allowed lateness
+bounded out of orderness, ascending...
+
+result refinement mode when having multiple triggers (fire and purge)
+
 processing time is natural, event time requires special techniques
 need to define measure of completeness to maximize correctness
 different methods for handling late data: retract old results, separate output, dismiss
 tradeoff completeness vs latency
+
+based on processing time: simple and perfect measure of completeness, applicable in many cases where observation time is desired
+
+based on event time: required when event time is desired, requires more buffering than processing time, usually no perfect measure of completeness, therefore based on heuristic
 
 
 \subsection{Stateful Processing}
@@ -76,30 +91,47 @@ for streaming: assume that data might not be replayable from beginning, correctn
 
 exactly once guarantees for correctness, requires offset and replayable source (at least data since last checkpoint)
 requires explicit state which is known to cluster and can be checkpointed
+exactly once especially important when side effects are non-idempotent~\cite[Chapter~5]{Akidau.2018}
 
 
-\subsection{Windowing}
-division of unbounded stream in bounded segments
-can be arbitrary, but usually time or count
-will focus on time, since count is effectively processing time
-fixed, sliding, session, fixed is special case of sliding window
 
-based on processing time: simple and perfect measure of completeness, applicable in many cases where observation time is desired
-
-based on event time: required when event time is desired, requires more buffering than processing time, usually no perfect measure of completeness, therefore based on heuristic
-
-triggers
-watermarks as heuristic, show different options
-difference between watermark and allowed lateness
-bounded out of orderness, ascending...
-
-several aggregations over window
+\section{Apache Flink}
 
 
-\subsection{Existing Platforms}
-Flink: async queries, multiple layers of abstraction (datastream, SQL), high availability for master and worker, unit testing
-Beam
+\subsection{APIs}
+datastream, dataset, SQL
+async queries
+event time
+unit testing
 
+\subsection{Cluster}
+workers and masters
+task slots
+high availability
+
+\subsection{Execution Model}
+tasks
+operators
+parallelism
+co-location and operator chaining
+shuffling after keyby
+watermark propagation
+
+\subsection{State}
+state backends
+broadcast state
+
+
+\subsection{Checkpointing}
+barriers
+aligned and unaligned
+
+
+\subsection{Network Stack}
+backpressure handling
+flow control
+latency vs throughput
+https://flink.apache.org/2019/06/05/flink-network-stack.html
 
 
 
@@ -120,7 +152,7 @@ Reasons~\cite[p.~31]{Kreps.2014}
 \end{itemize}
 
 
-\subsection{Kafka}
+\subsection{Apache Kafka}
 present Kafka
 commercial distributions like confluent provide tiered retention
 
