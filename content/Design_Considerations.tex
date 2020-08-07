@@ -1,0 +1,70 @@
+
+\section{Stream Transport Platforms}
+rabbitmq
+activemq
+kafka
+
+\subsection{Apache Kafka}
+present Kafka
+commercial distributions like confluent provide tiered retention
+
+
+
+\section{Stream Processing Platforms}
+storm
+spark streaming
+
+\cite{Shahverdi.2019} shows performance
+add feature list
+
+mention apache beam as higher level unified API running on top of these platforms
+implementation of dataflow model
+
+
+
+\subsection{Apache Flink}
+
+
+\subsubsection{APIs}
+datastream, dataset, SQL
+async queries
+event time
+unit testing
+watermarking strategies
+
+\subsubsection{Cluster}
+workers and masters
+task slots
+high availability
+
+\subsubsection{Execution Model}
+tasks
+operators
+parallelism
+co-location and operator chaining
+shuffling after keyby
+watermark propagation
+
+\subsubsection{State}
+state backends
+broadcast state
+
+\subsubsection{Checkpointing}
+barriers
+aligned and unaligned
+
+
+\subsubsection{Network Stack}
+backpressure handling
+flow control
+latency vs throughput
+https://flink.apache.org/2019/06/05/flink-network-stack.html
+
+\subsubsection{Flink + Kafka}
+replay
+partitioning
+high availability
+
+also managed versions on AWS, but set up ourselves to understand better
+
+

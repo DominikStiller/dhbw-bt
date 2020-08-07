@@ -1,12 +1,31 @@
 
-\section{Results}
 
+\section{Methodology}
+\subsection{Latency Tracking}
+processing latency reasons:
+reasons for latency: https://flink.apache.org/news/2019/02/25/monitoring-best-practices.html\#monitoring-latency
+configuration can tradeoff latency vs throughput
+not the same as stream latency caused by waiting for watermark
+
+
+\subsection{Volume Scaling}
+part of ingest
+use recording and replay multiple times
+each replay in separate process with two threads: s3 reader and kafka producer
+payload adjustment
+
+
+\section{Results}
 
 \subsection{Latency}
 latency: latency is the delay between the creation of an event and the time at which results based on this event become visible (https://flink.apache.org/news/2019/02/25/monitoring-best-practices.html\#monitoring-latency)
 
 maybe test very simple stateful job to see scalability without CEP and windowing
 pass through to minimum latency possible
+maybe have late data
+use confidence interval
+
+also show Kafka backlog
 
 \subsection{Log Size}
 measure log size with json vs binary protobuf

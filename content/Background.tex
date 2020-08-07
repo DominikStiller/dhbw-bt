@@ -31,6 +31,10 @@ event time and processing time often do not coincide
 example: delayed data (vehicle in tunnel, phones in airplane), fast-forward through historic data
 
 
+\subsection{Challenges}
+define 4 attributes
+
+
 \subsection{Stream Processing Architectures}
 Storm was first widespread stream system but tradedoff correctness for latency
 use lambda for correctness at first
@@ -52,6 +56,10 @@ stream processing patterns~\cite[p.~35]{Akidau.2018}:
 	\item[Approximation] complicated algorithms like streaming k-means, some with provable error bounds
 	\item[Windowing] chopping up stream into bounded datasets, but not necessarily with fixed bounds like in batch but allow arbitrary windows (like session)
 \end{description}
+
+windowing is what we call stream analytics
+relates multiple elements using time as ordering
+relation requires keeping state
 
 
 \subsection{Timely Processing}
@@ -95,48 +103,8 @@ exactly once especially important when side effects are non-idempotent~\cite[Cha
 
 
 
-\section{Apache Flink}
-
-
-\subsection{APIs}
-datastream, dataset, SQL
-async queries
-event time
-unit testing
-
-\subsection{Cluster}
-workers and masters
-task slots
-high availability
-
-\subsection{Execution Model}
-tasks
-operators
-parallelism
-co-location and operator chaining
-shuffling after keyby
-watermark propagation
-
-\subsection{State}
-state backends
-broadcast state
-
-
-\subsection{Checkpointing}
-barriers
-aligned and unaligned
-
-
-\subsection{Network Stack}
-backpressure handling
-flow control
-latency vs throughput
-https://flink.apache.org/2019/06/05/flink-network-stack.html
-
-
-
 \section{Stream Transport}
-message queue (Rabbitmq), often ephemeral
+message queue, often ephemeral
 plain socket stream
 pubsub
 
@@ -151,10 +119,6 @@ Reasons~\cite[p.~31]{Kreps.2014}
 	\item Buffering and isolation, e.g. for backpressure handling and replay on node failure, important prerequisite for robustness and correctness
 \end{itemize}
 
-
-\subsection{Apache Kafka}
-present Kafka
-commercial distributions like confluent provide tiered retention
 
 
 
@@ -179,7 +143,8 @@ event-carried state transfer
 geoevents
 
 
-\subsection{Complex Event Processing}
+\subsection{Pattern Recognition}
+Also called Complex Event Processing, but ambiguous
 pattern recognition performed on event streams
 seit sql:2016 auch iso standard
 not bound to stream processing, also e.g. microservices

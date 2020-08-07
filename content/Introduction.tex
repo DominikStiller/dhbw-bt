@@ -1,6 +1,25 @@
+the earlier insight arrive, the higher the value
+historically, data arrived in batches, maybe once per day
+this gave rise to batch processing systems, now highly performance optimized
 
-problem: Scalability + Stateful Processing (-> required for detection of complex events)
+\section{Problem}
+lately, move from batch data to streaming data, since more data arrive continuously
+wide application range
 
+processing is treating streaming data like batch data
+stream-native processing can improve correctness and stream-specific features (session windows)
+
+non trivial because of time and State
+time because events arrive out of order, state to enable complex tasks (pattern recognition)
+still want to have correctness and faulttolerance at low latency
+especially challenging at large scale
+some existing platforms to solve problems
+
+we want to understand stream-native processing platforms
+get hands on experience with usecase
+
+
+\section{Scope}
 goal:
 \begin{itemize}
     \item give an overview over correct, fault-tolerant, low-latency and scalable processing of streaming data

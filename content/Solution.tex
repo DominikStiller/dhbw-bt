@@ -1,25 +1,4 @@
-Looked for interesting use case which we can use to experiment with stream processing
 aspects: correct, fault-tolerant, low-latency and scalable
-Wanted to use real data
-
-
-
-\section{Use Case}
-\subsection{HSL API Data}
-Available data
-statistics
-
-\subsection{Analytics}
-wanted to have analytics with challenges in different areas: pattern recognition, external queries
-
-\subsection{Geoaggregation}
-Division in cells
-
-late data handling
-watermark bounded out of orderness time vs allowed lateness is a tradeoff between latency and recomputation effort
-if only interested in latest window results: allowed lateness = window evaluation time
-late side output if fine-grained handling required
-but often if delayed: delayed much longer than allowed lateness, e.g. if bus is in tunnel instead of just small transmission delay
 
 
 
@@ -42,10 +21,12 @@ for larger cases, should use central schema registry like supported by confluent
 
 \subsection{Ingestion}
 Extensible design with ingestors and processors
+write to ingess topics
 
 
 \subsection{Flink Jobs}
 describe common functions (key selectors)
+write to job topic
 
 job design considerations:
 \begin{itemize}
@@ -58,34 +39,18 @@ job design considerations:
 	\item checkpointing frequency
 	\item retention period
 	\item parallelism vs core/n\_workers
-	\item caching for asnyc functions (show numbers, 5 req/s instead of 800 req/s)
 \end{itemize}
 
 
-\subsection{Latency Tracking}
-processing latency reasons:
-reasons for latency: https://flink.apache.org/news/2019/02/25/monitoring-best-practices.html\#monitoring-latency
-configuration can tradeoff latency vs throughput
-not the same as stream latency caused by waiting for watermark
 
-
-\subsection{Volume Scaling}
-part of ingest
-use recording and replay multiple times
-each replay in separate process with two threads: s3 reader and kafka producer
-payload adjustment
-
-
-
-\section{Data Flow Example}
 
 
 
 \section{Deployment}
-\subsection{Server Considerations}
+\subsection{Infrastructure Considerations}
 capacity planning: https://www.ververica.com/blog/how-to-size-your-apache-flink-cluster-general-guidelines
 
 
-\subsection{Automation}
-immutable infrastructure (relevant?)
+immutable infrastructure (keep short)
+infrastructure as code
 

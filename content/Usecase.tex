@@ -1,0 +1,23 @@
+Looked for interesting use case which we can use to experiment with stream processing
+Wanted to use real data
+
+\section{HSL API Data}
+Available data
+statistics
+
+\section{Analytics}
+wanted to have analytics with challenges in different areas: pattern recognition, external queries
+
+\subsection{Geoaggregation}
+Division in cells
+enables aggregation
+provides way to reduce complexity with configurable resolution
+
+late data handling
+watermark bounded out of orderness time vs allowed lateness is a tradeoff between latency and recomputation effort
+if only interested in latest window results: allowed lateness = window evaluation time
+late side output if fine-grained handling required
+but often if delayed: delayed much longer than allowed lateness, e.g. if bus is in tunnel instead of just small transmission delay
+
+\section{Data Flow Example}
+
