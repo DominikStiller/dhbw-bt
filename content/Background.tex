@@ -1,19 +1,27 @@
+Understanding the challenges that are inherent to the building blocks of stream analytic is key to building a good solution.
+
+
+
 \section{Batch Processing}
-batch processing for a couple of years
-processing of complete, bounded dataset, e.g. once per day
-many jobs have same structure, therefore mapreduce/hadoop enables fault tolerance and scalability with common programming model
-Flume extended simple model with support for optimized complex pipelines
+Historically, data was processed in form of bounded batch datasets. A batch processing system takes a large amount of input data and runs a \textit{job} to process it. The produced result are often analytics, but arbitrary applications like search index building and machine learning feature extraction can be processed with this method. Since batch jobs usually take a while to execute, they are not interactive but scheduled to run periodically. For example, web server logs can be imported once per day from the web server \glspl{node} and then processed. Throughput, i.e. the amount of data processed per second, is a key metric since data volume is usually very large~\cite[p.~390]{Kleppmann.2017}.
 
-easy to reason about completeness since it is bounded
-when node fails, simply restart on other nodes
-latency usually not an issue
+As the volume of data grew, it became too large to be handled by a single \gls{node} (we use the term \textit{node} to refer to an individual server in a cluster). This sparked the development of distributed processing engines like Hadoop~\cite{Apache.2020} (based on the MapReduce~\cite{Dean.2008} programming model) and Spark~\cite{Apache.2020b}. These frameworks tackle two common challenges of large-scale batch processing~\cites[p.~429]{Kleppmann.2017}[pp.~362--373]{Akidau.2018}:
+\begin{itemize}
+	\item Scalability: support for distributed processing across nodes requires orchestration and \textit{partitioning}, i.e. the division of the data set into subsets that can be processed in parallel, possibly on different \glspl{node}
+	\item Fault-tolerance: guarantee of consistent and correct results even in case of job failures caused, for example, by hardware failure or scheduler-induced preemption
+\end{itemize}
+Having a framework to handle these issues makes focusing on the actual problem much easier.
 
-falls short e.g. with session windows
-high latency
+Distributed batch processing engines assume that all functions applied to the data are stateless (no intermediate results are stored) and have no externally visible side effects (e.g., database updates)~\cite[p.~430]{Kleppmann.2017}. While these assumptions result in a deliberately restricted programming model, they facilitate distributed execution. Since no state needs to be shared between nodes, partition-based scalability is simple. In case of faults, the job can be restarted using the same input data, and the final output will be the same as if no faults had occurred (assuming deterministic operations). This is possible because input data are stored in a distributed and fault-tolerant file system like HDFS~\cite{Apache.2020}. Therefore, the file system facilitates processing across multiple nodes.
+
+Batch processing has been successfully applied at massive scales, with Hadoop clusters at Yahoo of 35,000 nodes being used to store \SI{600}{\peta\byte} of data and run 34 million jobs every month~\cite{YahooDeveloperNetwork.2020}. However, it is only suitable for applications where low latencies are not required. Batch engines fall short when real-time processing is required, since they only process data once all input data are available. In practice, most data arrive as a continuous stream but need to be divided into batches of a certain size for processing~\cite[p.~439]{Kleppmann.2017}. An obvious solution might be to decrease the batch size and run the job at a higher frequency, a technique known as micro-batching. This can decrease the latency to a few seconds, but ultra-low latency applications are still infeasible with micro-batch processing. This is especially true when considering that data might arrive with a delay, which usually requires deferred processing or re-proccessing when the late data arrive. Also, jobs that might span batch bounds, such as user session analysis in web applications, are inherently complex to implement~\cite[pp.~34--35]{Akidau.2018}.
+
+Apart from the technical shortcomings, processing a continous stream of data in batches seems wrong from a philosohphical point of view. Batch processing frameworks are fundamentally ill-suited for this type of data. Why not build processing engines specifically designed with continuous data streams in mind, that can overcome and embrace stream characteristics to enable new types of applications?
 
 
 
 \section{Stream Processing}
+Stream-native processing, as opposed to batch processing on streams, comes with many challenges, but is ultimately the more powerful approach when dealing with continous data streams. This section is an introduction to streams and stream processing, showing the fundamental characteristics and challenges.
 
 
 \subsection{Streaming Data Properties}
@@ -22,6 +30,7 @@ stream vs table
 
 streams are natural for many data
 even many batch processing applications only use batch because of a lack of digitalization~\cite[p.~29]{Kreps.2014}
+batch is easy to reason about completeness since it is bounded
 
 concepts of event time and processing time
 analysis of data based on when they are observed as opposed to when they occur is usually not sufficient
@@ -43,7 +52,12 @@ spark streaming as first large-scale stream processing engine with correctness g
 correctness needed for stream to get parity with batch, time gets you beyond batch~\cite[p.~28]{Akidau.2018}
 
 instead of chopping up natural streams as in batch processing, embrace characteristics (unbounded) and process stream continuously
-\begin{quote}We propose that a fundamental shift of approach is necessary to deal with these evolved requirements in modern data processing. We as a field must stop trying to groom unbounded datasets into finite pools of information that eventually become complete, and instead live and breathe under the assumption that we will never know if or when we have seen all of our data, only that new data will arrive, old data may be retracted, and the only way to make this problem tractable is via principled abstractions that allow the practitioner the choice of appropriate tradeoffs along the axes of interest: correctness, latency, and cost.~\cite[p.~1792]{TylerAkidau.2015}\end{quote}
+achieves much lower latency
+throughput may suffer, but future developments might help
+
+\begin{quote}
+	We propose that a fundamental shift of approach is necessary to deal with these evolved requirements in modern data processing. We as a field must stop trying to groom unbounded datasets into finite pools of information that eventually become complete, and instead live and breathe under the assumption that we will never know if or when we have seen all of our data, only that new data will arrive [and] old data may be retracted.~\cite[p.~1792]{TylerAkidau.2015}
+\end{quote}
 
 batch can be processed with streaming system
 explanation of a true streaming use case~\cite[p.~386]{Akidau.2018}
