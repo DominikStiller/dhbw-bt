@@ -40,6 +40,7 @@ job design considerations:
 	\item retention period
 	\item parallelism vs core/n\_workers
 	\item watermark frequency changes computation effort
+	\item variable reuse if sequential (e.g. reuse output tuples instead of creating them for every record. what about downstream ops?)
 \end{itemize}
 
 

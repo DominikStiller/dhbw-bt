@@ -1,0 +1,22 @@
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
+
+[tool.poetry]
+name = "bt"
+version = "1.0"
+description = "Bachelor's Thesis"
+authors = ["Dominik Stiller <dominik.stiller@hpe.com>"]
+packages = []
+
+[tool.poetry.dependencies]
+python = "^3.8"
+ptinsight-common = {path = "../../ptinsight/app/common/python", develop=false}
+jupyterlab = "^2.1.5"
+seaborn = "^0.10.1"
+python-dateutil = "^2.8.1"
+
+[tool.poetry.dev-dependencies]
+matplotlib = "^3.2.2"
+pandas = "^1.0.5"
+seaborn = "^0.10.1"

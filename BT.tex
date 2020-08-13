@@ -29,10 +29,8 @@
 		\input{content/Abstract}
 	\end{abstract}
 
-	% \setlength{\cftbeforetoctitleskip}{2.1em}
-	% \begin{spacing}{1.15}
-	\setlength{\cftbeforetoctitleskip}{0em}
-	\begin{spacing}{.85}
+	\setlength{\cftbeforetoctitleskip}{2.1em}
+	\begin{spacing}{1.1}
 	   \tableofcontents
 	\end{spacing}
 	\clearpage
@@ -46,15 +44,15 @@
 	\printacronyms
 	\clearpage
 	
-	% \addcontentsline{toc}{chapter}{\listfigurename}
+	\addcontentsline{toc}{chapter}{\listfigurename}
 	\listoffigures
 	\clearpage
-	% \addcontentsline{toc}{chapter}{\listtablename}
+	\addcontentsline{toc}{chapter}{\listtablename}
 	\listoftables
 	\clearpage
 	\include{misc/symbols}
 	\renewcommand\listoflistingscaption{List of Source Codes}
-	% \listoflistings
+	\listoflistings
 	\printnomenclature
 	\clearpage
 	
@@ -62,7 +60,7 @@
 	
 	\pagestyle{headings}
 	
-	% \addtocontents{toc}{\protect\thispagestyle{empty}}
+	\addtocontents{toc}{\protect\thispagestyle{empty}}
 	%----------------------------------------------------------------------------
 	% Content
 	%----------------------------------------------------------------------------

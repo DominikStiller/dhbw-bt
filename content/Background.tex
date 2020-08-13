@@ -1,47 +1,65 @@
-Understanding the challenges that are inherent to the building blocks of stream analytic is key to building a good solution.
+Understanding the challenges that are inherent to the building blocks of stream analytics is key to building a good solution. Therefore, this chapter provides background on characteristics and processing of event streams.
+
+
 
 
 
 \section{Batch Processing}
-Historically, data was processed in form of bounded batch datasets. A batch processing system takes a large amount of input data and runs a \textit{job} to process it. The produced result are often analytics, but arbitrary applications like search index building and machine learning feature extraction can be processed with this method. Since batch jobs usually take a while to execute, they are not interactive but scheduled to run periodically. For example, web server logs can be imported once per day from the web server \glspl{node} and then processed. Throughput, i.e. the amount of data processed per second, is a key metric since data volume is usually very large~\cite[p.~390]{Kleppmann.2017}.
+For the better part of history, data was processed in form of batch datasets. An early analog example of batch data processing is the United States census: when the census was initiated in 1790, horseback riders recorded citizen counts per area and then transported their records to a central location for aggregation. While this is an extreme example, the principle still holds for digital data like periodic database dumps or bulk log transfers found in many batch processing systems today, where the the whole dataset is processed at once after arrival~\cite[p.~28]{Kreps.2014}.
 
-As the volume of data grew, it became too large to be handled by a single \gls{node} (we use the term \textit{node} to refer to an individual server in a cluster). This sparked the development of distributed processing engines like Hadoop~\cite{Apache.2020} (based on the MapReduce~\cite{Dean.2008} programming model) and Spark~\cite{Apache.2020b}. These frameworks tackle two common challenges of large-scale batch processing~\cites[p.~429]{Kleppmann.2017}[pp.~362--373]{Akidau.2018}:
+A batch processing system takes a large amount of input data and runs a \textit{job} to process it. The produced result are often analytics, but arbitrary applications like search index building and machine learning feature extraction can be built with this method. Since batch jobs usually take a while to execute, they are not interactive but scheduled to run periodically. For example, web server logs can be imported once per day from the web server \glspl{node} and then user behavior analytics are available on the next morning. While latency is high, throughput, i.e. the amount of data processed per second, is a key performance metric since data volume is usually very large~\cite[p.~390]{Kleppmann.2017}.
+
+As the volume of data grew, dataset became too large to be handled by a single \gls{node} (we use the term \textit{node} to refer to an individual server in a cluster). This sparked the development of distributed processing engines like Hadoop~\cite{Apache.2020} (based on the MapReduce~\cite{Dean.2008} programming model) and Spark~\cite{Apache.2020b}. These frameworks tackle two common challenges of large-scale batch processing~\cites[p.~429]{Kleppmann.2017}[pp.~362--373]{Akidau.2018}:
 \begin{itemize}
-	\item Scalability: support for distributed processing across nodes requires orchestration and \textit{partitioning}, i.e. the division of the data set into subsets that can be processed in parallel, possibly on different \glspl{node}
+	\item Scalability: support for distributed processing across nodes requires orchestration and \textit{partitioning}, i.e. the division of the dataset into subsets that can be processed in parallel, possibly on different \glspl{node}
 	\item Fault-tolerance: guarantee of consistent and correct results even in case of job failures caused, for example, by hardware failure or scheduler-induced preemption
 \end{itemize}
 Having a framework to handle these issues makes focusing on the actual problem much easier.
 
-Distributed batch processing engines assume that all functions applied to the data are stateless (no intermediate results are stored) and have no externally visible side effects (e.g., database updates)~\cite[p.~430]{Kleppmann.2017}. While these assumptions result in a deliberately restricted programming model, they facilitate distributed execution. Since no state needs to be shared between nodes, partition-based scalability is simple. In case of faults, the job can be restarted using the same input data, and the final output will be the same as if no faults had occurred (assuming deterministic operations). This is possible because input data are stored in a distributed and fault-tolerant file system like HDFS~\cite{Apache.2020}. Therefore, the file system facilitates processing across multiple nodes.
+Distributed batch processing engines assume that all functions applied to the data are stateless (no intermediate results are stored) and have no externally visible side effects (e.g., database updates)~\cite[p.~430]{Kleppmann.2017}. While these assumptions result in a deliberately restricted programming model, they facilitate distributed execution. Since no state needs to be shared between nodes, partition-based scalability is simple. In case of faults, the job can be restarted using the same input data, and the final output will be the same as if no faults had occurred (assuming deterministic operations). This is possible because input data are stored in a distributed and fault-tolerant file system like \gls{HDFS}~\cite{Apache.2020}. Therefore, the underlying file system facilitates processing across multiple nodes. Some processing engines store intermediate results to speed up re-computations after failures, but this often requires tracking of data ancestry or checkpointing~\cite[p.~430]{Kleppmann.2017}.
 
-Batch processing has been successfully applied at massive scales, with Hadoop clusters at Yahoo of 35,000 nodes being used to store \SI{600}{\peta\byte} of data and run 34 million jobs every month~\cite{YahooDeveloperNetwork.2020}. However, it is only suitable for applications where low latencies are not required. Batch engines fall short when real-time processing is required, since they only process data once all input data are available. In practice, most data arrive as a continuous stream but need to be divided into batches of a certain size for processing~\cite[p.~439]{Kleppmann.2017}. An obvious solution might be to decrease the batch size and run the job at a higher frequency, a technique known as micro-batching. This can decrease the latency to a few seconds, but ultra-low latency applications are still infeasible with micro-batch processing. This is especially true when considering that data might arrive with a delay, which usually requires deferred processing or re-proccessing when the late data arrive. Also, jobs that might span batch bounds, such as user session analysis in web applications, are inherently complex to implement~\cite[pp.~34--35]{Akidau.2018}.
+Batch processing has been successfully applied at massive scales, with Hadoop clusters at Yahoo of 35,000 nodes being used to store \SI{600}{\peta\byte} of data and run 34 million jobs every month~\cite{YahooDeveloperNetwork.2020}. However, it is only suitable for applications where low latencies are not required. Batch engines fall short when real-time processing is required, since they only process data once all input data are available. In practice, most data arrive as a continuous stream but are be divided into batches of a certain size for batch processing~\cite[p.~439]{Kleppmann.2017}. An obvious solution might be to decrease the batch size and run the job at a higher frequency, a technique known as \textit{micro-batching}. This can decrease the latency to less than a second, but ultra-low latency applications are still infeasible with micro-batch processing~\cite{Hazelcast.2019}. This is especially true when considering that data might arrive with a delay, which usually requires deferred processing or re-proccessing when late data arrive. Also, jobs that might span batch bounds, such as user session analysis in web applications, are inherently complex to implement~\cite[pp.~34--35]{Akidau.2018}.
 
-Apart from the technical shortcomings, processing a continous stream of data in batches seems wrong from a philosohphical point of view. Batch processing frameworks are fundamentally ill-suited for this type of data. Why not build processing engines specifically designed with continuous data streams in mind, that can overcome and embrace stream characteristics to enable new types of applications?
+Apart from the technical shortcomings, processing a continous stream of data in batches seems wrong from a philosohphical point of view. Batch processing frameworks are fundamentally ill-suited for this type of data. Why not build processing engines specifically designed with continuous streaming data in mind, that can overcome and embrace stream characteristics to enable new types of applications?
+
+
 
 
 
 \section{Stream Processing}
-Stream-native processing, as opposed to batch processing on streams, comes with many challenges, but is ultimately the more powerful approach when dealing with continous data streams. This section is an introduction to streams and stream processing, showing the fundamental characteristics and challenges.
+Stream-native processing, as opposed to batch processing on streams, comes with many challenges, but is ultimately the more powerful approach when dealing with streaming data. This section is an introduction to streams and stream processing, showing the fundamental characteristics and challenges.
+
 
 
 \subsection{Streaming Data Properties}
-properties: unbounded, unordered, varying event time skew
-stream vs table
+The terms \enquote{stream processing} has been assigned a variety of meanings. Many associate low-latency, approximate, or speculative results with stream processing systems, especially in comparison to batch processing systems~\cite[pp.~23--24]{Akidau.2018}. While many historic systems had these properties, they are not inherent and should therefore not be used for definitions. Well-designed stream processing systems are perfectly capable of producing correct results. Therefore we use the definition of \citeauthor{Akidau.2018}:
+\begin{quote}
+	[A stream processing system is] a type of data processing engine that is designed with infinite datasets in mind~\cite[p.~24]{Akidau.2018}.
+\end{quote}
 
-streams are natural for many data
-even many batch processing applications only use batch because of a lack of digitalization~\cite[p.~29]{Kreps.2014}
-batch is easy to reason about completeness since it is bounded
+Accordingly, a stream is an \textit{unbounded} dataset that is infinite in size. Unboundedness means that a stream does not terminate and new data will arrive continuously. Many data sources found in the real world produce data naturally as unbounded stream: sensors measurements, stock updates, user activities, credit card transactions, retail purchases, public transportation updates and business activities come from processes that are theoretically infinite (or at least very long-running), so we have to assume that they do not end. This is in contrast to \textit{bounded} datasets found in batch processing.
 
-concepts of event time and processing time
-analysis of data based on when they are observed as opposed to when they occur is usually not sufficient
-need to handle event time separately
-
-event time and processing time often do not coincide
-example: delayed data (vehicle in tunnel, phones in airplane), fast-forward through historic data
+The reason for the prevalence of batch processing despite the stream nature of most data stems from historical technical limitations of data collection~\cite[p.~29]{Kreps.2014}. Batch collection was the norm, be it for early census calculations or digital bulk dumps. Now we see a shift to more continuous data processing thanks to automation and digitization in the data collection process, which reduces latency but also requires new processing techniques. For the census example, this could mean to record births and deaths to produce continuous calculation counts.
 
 
-\subsection{Challenges}
-define 4 attributes
+\subsubsection{Time Domains}
+A stream consist of records that usually contains information about an \textit{event}, i.e. something of interest that happens in the real world. These might, for example, be purchases, website views, temperature changes or the arrival of a bus at a stop. When processing an event stream, two time domains are involved~\cite[p.~29]{Akidau.2018}:
+\begin{itemize}
+	\item Event time: the time at which the event actually occured in the real world
+	\item Processing time: the time at which events are observed in the processing system
+\end{itemize}
+
+These two time domains often do not coincide. The processing time can never be before the event time. However, the delay between the occurance and processing of an event can be arbitrarily large. Usually, there is some small base delay due to, for example, network latencies and resource limitations. Other events might occasionally arrive later than expected, for example, when a vehicle broadcasting its position enters a tunnel or people using their phone sit in an airplane. In case historic data are processed, there might even be years of delay between event and processing time. Note that processing time is the natural order in which events arrive and are processed, processing by event time order requires additional effort.
+
+The relationship of the two time domains can be visualized by plotting the progress of processing time over event time as shown in figure \ref{fig:background-timeskew-events}. Events (denoted by the diamonds) occur at event time and arrive at the system at processing time. The delay between these two is also known as \textit{event-time skew}or \textit{processing-time lag} (both terms are two perspectives on the same issue)~\cite[p.~30--31]{Akidau.2018}. The event-time skew for the green event is shown by the arrow. Events on the diagonal line would have no event-time skew. This would mean that data are processed instantly after occurring, which simplifies processing because events would arrive at the system in event time order. In reality, events are always above this line due to the base delay. However, the delay is not constant. While events occur every \SI{30}{\second} as shown in the top margin, some are observed much faster than others as shown in the right margin. In case of the green, blue and orange events, this even changes their order. This makes the stream (partially) unordered with respect to event time. Handling this skew and unorder is a key challenge stream processing frameworks have to solve.
+
+\begin{figure}
+	\centering
+	\includegraphics[width=0.55\textwidth]{plot_background_time_skew_events}%
+	\caption[Relationship between event time and processing time]{Relationship between event time and processing time: time skew varies a lot and leads to out-of-order arrival}
+	\label{fig:background-timeskew-events}
+\end{figure}
+
 
 
 \subsection{Stream Processing Architectures}
@@ -60,7 +78,10 @@ throughput may suffer, but future developments might help
 \end{quote}
 
 batch can be processed with streaming system
+bounded datasets can be processed like unbounded datasets but with additional optimizations~\cite[p.~26,~p.~199]{Akidau.2018}
+API is same, but processing can be optimized
 explanation of a true streaming use case~\cite[p.~386]{Akidau.2018}
+
 
 
 \subsection{Processing Patterns}
@@ -76,6 +97,7 @@ relates multiple elements using time as ordering
 relation requires keeping state
 
 
+
 \subsection{Timely Processing}
 windowing as division of unbounded stream in bounded segments
 can be arbitrary, but usually time or count
@@ -83,8 +105,10 @@ will focus on time, since count is effectively processing time
 fixed, sliding, session, fixed is special case of sliding window
 custom window using window assigner
 
+watermark might be too fast or too short
 triggers define result materialization in processing time
 repeated or based on watermarks as measure of completeness
+can also have early and late
 \begin{quote}Repeated update triggers are great for use cases in which we simply want periodic updates to our results over time and are fine with those updates converging toward correctness with no clear indication of when correctness is achieved.~\cite[p.~63]{Akidau.2018}\end{quote}
 
 watermarks as heuristic, show different options
@@ -94,6 +118,8 @@ bounded out of orderness, ascending...
 result refinement mode when having multiple triggers (fire and purge)
 
 processing time is natural, event time requires special techniques
+analysis of data based on when they are observed as opposed to when they occur is usually not sufficient for correctness
+correct and latency are balancing with cost (more resources for fast and correct results)
 need to define measure of completeness to maximize correctness
 different methods for handling late data: retract old results, separate output, dismiss
 tradeoff completeness vs latency
@@ -101,6 +127,7 @@ tradeoff completeness vs latency
 based on processing time: simple and perfect measure of completeness, applicable in many cases where observation time is desired
 
 based on event time: required when event time is desired, requires more buffering than processing time, usually no perfect measure of completeness, therefore based on heuristic
+
 
 
 \subsection{Stateful Processing}
@@ -117,10 +144,21 @@ exactly once especially important when side effects are non-idempotent~\cite[Cha
 
 
 
+\subsection{Stream--Table Duality}
+streams are data in motion
+table are data at rest
+can be converted
+\cite[pp.~174--212]{Akidau.2018}
+
+
+
+
+
 \section{Stream Transport}
 message queue, often ephemeral
 plain socket stream
 pubsub
+
 
 
 \subsection{Immutable logs}
@@ -132,6 +170,7 @@ Reasons~\cite[p.~31]{Kreps.2014}
 	\item ordering
 	\item Buffering and isolation, e.g. for backpressure handling and replay on node failure, important prerequisite for robustness and correctness
 \end{itemize}
+
 
 
 
@@ -155,6 +194,7 @@ event sourcing
 event-carried state transfer
 
 geoevents
+
 
 
 \subsection{Pattern Recognition}
