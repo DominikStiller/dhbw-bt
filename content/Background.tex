@@ -22,6 +22,11 @@ Batch processing has been successfully applied at massive scales, with Hadoop cl
 
 Apart from the technical shortcomings, processing a continous stream of data in batches seems wrong from a philosohphical point of view. Batch processing frameworks are fundamentally ill-suited for this type of data. Why not build processing engines specifically designed with continuous streaming data in mind, that can overcome and embrace stream characteristics to enable new types of applications?
 
+oceThis far-reaching sentiment was first expressed by Google researchers \citeauthor{TylerAkidau.2015} in \citeyear{TylerAkidau.2015}:
+\begin{quote}
+	We propose that a fundamental shift of approach is necessary to deal with these evolved requirements in modern data processing. We as a field must stop trying to groom unbounded datasets into finite pools of information that eventually become complete, and instead live and breathe under the assumption that we will never know if or when we have seen all of our data, only that new data will arrive [and] old data may be retracted~\cite[p.~1792]{TylerAkidau.2015}.
+\end{quote}
+
 
 
 
@@ -37,7 +42,7 @@ The terms \enquote{stream processing} has been assigned a variety of meanings. M
 	[A stream processing system is] a type of data processing engine that is designed with infinite datasets in mind~\cite[p.~24]{Akidau.2018}.
 \end{quote}
 
-Accordingly, a stream is an \textit{unbounded} dataset that is infinite in size. Unboundedness means that a stream does not terminate and new data will arrive continuously. Many data sources found in the real world produce data naturally as unbounded stream: sensors measurements, stock updates, user activities, credit card transactions, retail purchases, public transportation updates and business activities come from processes that are theoretically infinite (or at least very long-running), so we have to assume that they do not end. This is in contrast to \textit{bounded} datasets found in batch processing.
+Accordingly, a stream is an \textit{unbounded} dataset that is infinite in size. Unboundedness means that a stream does not terminate and new data will arrive continuously. Therefore the dataset will never be complete Many data sources found in the real world produce data naturally as unbounded stream: sensors measurements, stock updates, user activities, credit card transactions, retail purchases, public transportation updates and business activities come from processes that are theoretically infinite (or at least very long-running), so we have to assume that they do not end. This is in contrast to \textit{bounded} datasets found in batch processing, which are regarded as complete.\footnote{This assumption can be made because there usually is a delay between data collection and data processing. Correct results can only be produced if this assumption holds and no data is late.}
 
 The reason for the prevalence of batch processing despite the stream nature of most data stems from historical technical limitations of data collection~\cite[p.~29]{Kreps.2014}. Batch collection was the norm, be it for early census calculations or digital bulk dumps. Now we see a shift to more continuous data processing thanks to automation and digitization in the data collection process, which reduces latency but also requires new processing techniques. For the census example, this could mean to record births and deaths to produce continuous calculation counts.
 
@@ -51,7 +56,7 @@ A stream consist of records that usually contains information about an \textit{e
 
 These two time domains often do not coincide. The processing time can never be before the event time. However, the delay between the occurance and processing of an event can be arbitrarily large. Usually, there is some small base delay due to, for example, network latencies and resource limitations. Other events might occasionally arrive later than expected, for example, when a vehicle broadcasting its position enters a tunnel or people using their phone sit in an airplane. In case historic data are processed, there might even be years of delay between event and processing time. Note that processing time is the natural order in which events arrive and are processed, processing by event time order requires additional effort.
 
-The relationship of the two time domains can be visualized by plotting the progress of processing time over event time as shown in figure \ref{fig:background-timeskew-events}. Events (denoted by the diamonds) occur at event time and arrive at the system at processing time. The delay between these two is also known as \textit{event-time skew}or \textit{processing-time lag} (both terms are two perspectives on the same issue)~\cite[p.~30--31]{Akidau.2018}. The event-time skew for the green event is shown by the arrow. Events on the diagonal line would have no event-time skew. This would mean that data are processed instantly after occurring, which simplifies processing because events would arrive at the system in event time order. In reality, events are always above this line due to the base delay. However, the delay is not constant. While events occur every \SI{30}{\second} as shown in the top margin, some are observed much faster than others as shown in the right margin. In case of the green, blue and orange events, this even changes their order. This makes the stream (partially) unordered with respect to event time. Handling this skew and unorder is a key challenge stream processing frameworks have to solve.
+The relationship of the two time domains can be visualized by plotting the progress of processing time over event time as shown in figure \ref{fig:background-timeskew-events}. Events (denoted by the diamonds) occur at event time and arrive at the system at processing time. The delay between these two is also known as \textit{event-time skew} or \textit{processing-time lag} (both terms are two perspectives on the same issue)~\cite[p.~30--31]{Akidau.2018}. The event-time skew for the green event is shown by the arrow. Events on the diagonal line would have no event-time skew. This would mean that data are processed instantly after occurring, which simplifies processing because events would arrive at the system in event time order. In reality, events are always above this line due to the base delay. However, the delay is not constant. While events occur every \SI{30}{\second} as shown in the top margin, some are observed much faster than others as shown in the right margin. In case of the green, blue and orange events, this even changes their order. This makes the stream (partially) unordered with respect to event time. Handling this skew and unorder is a key challenge stream processing frameworks have to solve~\cite[p.~28]{Akidau.2018}.
 
 \begin{figure}
 	\centering
@@ -63,24 +68,42 @@ The relationship of the two time domains can be visualized by plotting the progr
 
 
 \subsection{Stream Processing Architectures}
-Storm was first widespread stream system but tradedoff correctness for latency
-use lambda for correctness at first
-spark streaming as first large-scale stream processing engine with correctness guarantee for kappa architecture, nut only processing time
+The unbounded nature of streams, requiring continuous processing, cannot be handled by batch processing engines like Hadoop. While academic and commercial stream processing engines (SEEP, Naiad, Microsoft StreamInsight, IBM Streams) have existed before~\cite[p.~37]{Katsifodimos.2015}, Apache Storm was the first one to find widespread adoption when it was released in 2011~\cite[p.~375]{Akidau.2018}. Like MapReduce, it solves many of the common challenges like fault-tolerance, networking and serialization and allows developers to focus on solving the actual problem~\cite{Marz.2014}.
 
-correctness needed for stream to get parity with batch, time gets you beyond batch~\cite[p.~28]{Akidau.2018}
+While Storm excelled at providing low-latency results, it did so by sacrificing features like exactly-once processing required for guaranteed correctness. This sparked the development of the Lambda architecture~\cite{Marz.2011}, shown in figure \ref{fig:background-lambda-architecture}. The batch layer produces correct results and handles fault-tolerance and scalability through the underlying processing engine, often Hadoop. Jobs are expressed in the MapReduce framework and store their results in a database optimized for batch writes and random reads for serving. The batch layer naturally lags behind real-time, therefore data is simultaneously processed in a real-time/speed layer, often implemented using Storm. The speed layer provides low-latency results but lacks in the correctness department due to approximative algorithms or possible system faults. This is acceptable, however, since speed layer results are overwritten by correct batch layer results once available. Even if a speed layer job fails, b batch layer results will be available at a later point. This requires the batch layer to store incoming data in an immutable and fault-tolerant way, also enabling recomputation in case processing code changes. By leveraging the two layers, the Lambda architecture provides low-latency, eventually-correct results~\cite[pp.~14--20,~p.~27--28]{Marz.2015}.
 
-instead of chopping up natural streams as in batch processing, embrace characteristics (unbounded) and process stream continuously
-achieves much lower latency
-throughput may suffer, but future developments might help
+\begin{figure}
+	\centering
+	% \includegraphics[width=0.55\textwidth]{plot_background_time_skew_events}
+	FIGURE OF LAMBDA ARCHITECUTURE
+	\caption[Lambda architecture]{Lambda architecture: the batch layer provides correct results, the speed layer provides low-latency results}
+	\label{fig:background-lambda-architecture}
+\end{figure}
 
-\begin{quote}
-	We propose that a fundamental shift of approach is necessary to deal with these evolved requirements in modern data processing. We as a field must stop trying to groom unbounded datasets into finite pools of information that eventually become complete, and instead live and breathe under the assumption that we will never know if or when we have seen all of our data, only that new data will arrive [and] old data may be retracted.~\cite[p.~1792]{TylerAkidau.2015}
-\end{quote}
+While the Lambda architecture has been used to build many successful systems, it is inherently complex. The processing logic needs to be implemented twice and in both cases specifically engineered towards the processing engine. Even if the logic is implemented in a higher-level API that can be compiled to MapReduce and stream processing jobs, the twofold operational effort remains~\cite{Kreps.2014c}.
 
-batch can be processed with streaming system
-bounded datasets can be processed like unbounded datasets but with additional optimizations~\cite[p.~26,~p.~199]{Akidau.2018}
-API is same, but processing can be optimized
-explanation of a true streaming use case~\cite[p.~386]{Akidau.2018}
+The Lambda architecture was born out of necessity since no framework could guarantee both low latency and correctness. However, more and more modern stream processing frameworks are able to provide the batch layer's correctness and the speed layer's correctness in a single system, much simplifying development and operations. This is called the Kappa architecture, shown in figure \ref{fig:background-kappa-architecture}. Instead of a storing data on a distributed file system, the stream is often stored in a replayable stream transport platform like Apache Kafka. This enables fault tolerance and recomputation in case of processing logic changes~\cite{Kreps.2014c}.
+
+\begin{figure}
+	\centering
+	% \includegraphics[width=0.55\textwidth]{plot_background_time_skew_events}
+	FIGURE OF KAPPA ARCHITECUTURE
+	\caption[Kappa architecture]{Kappa architecture: a single processing engine provides correct, low-latency results}
+	\label{fig:background-kappa-architecture}
+\end{figure}
+
+Spark Streaming~\cite{Apache.2020c} was the first large-scale stream processing engine being suited for use in a Kappa architecture. While not a true streaming but rather micro-batch processing engine, the latency was low enough for most applications. Since micro-batching uses batch processing under the hood, consistency and correct results were guaranteed. However, Spark Streaming lacked support for event-time processing, therefore producing correct results only in case of in-order data or event-time-agnostic computations. Correctness is absolutely required for stream processing engines to achieve parity with batch processing engines. Tools for reasoning about time, and especially event time, are essential for dealing with unbounded streams~\cite[pp.~27--28]{Akidau.2018}. Sophisticated time handling with high flexibility was explored in Google's company-internal MillWheel~\cite{TylerAkidau.2013} framework and Dataflow~\cite{TylerAkidau.2015}processing models. Apache Flink~\cite{Katsifodimos.2015} was the first open-source framework to incorporate the ideas into a high-throughput, low-latency stream processing engine that supports event-time processing and guarantees correctness.
+
+Another contribution of Dataflow and Flink is the realization that batch and stream processing can be unified. Bounded batch datasets are effectively a section of an unbounded stream dataset, as shown in figure \ref{fig:background-bounded-unbounded-datasets}, and jobs can be specified using the same API and be executed on the same engine. However, bounded datasets are amenable to additional optimizations towards throughput at the cost of latency by increasing bundling sizes and computing processing stages successively instead of continuously~\cites[p.~35]{Katsifodimos.2015}[pp.~198--199]{Akidau.2018}. Such a unified processing engine decreases development and operations cost since code and infrastructure can be shared, and allows to balance latency and throughput based on the application.
+
+\begin{figure}
+	\centering
+	% \includegraphics[width=0.55\textwidth]{plot_background_time_skew_events}
+	FIGURE OF BOUNDED AND UNBOUNDED DATASETS
+	% https://flink.apache.org/img/bounded-unbounded.png
+	\caption[Relationship between bounded and unbounded datasets]{Relationship between bounded and unbounded datasets: bounded datasets are sections of an unbounded dataset}
+	\label{fig:background-bounded-unbounded-datasets}
+\end{figure}
 
 
 
