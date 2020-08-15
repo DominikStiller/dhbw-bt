@@ -41,6 +41,7 @@ job design considerations:
 	\item parallelism vs core/n\_workers
 	\item watermark frequency changes computation effort
 	\item variable reuse if sequential (e.g. reuse output tuples instead of creating them for every record. what about downstream ops?)
+	\item need to balance correctness, latency and cost through watermark boundedness, allowed lateness and computing resources
 \end{itemize}
 
 

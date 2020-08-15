@@ -234,6 +234,79 @@ Complex Event Processing Systeme stellen eine vielversprechende M{\"o}glichkeit 
 }
 
 
+@book{Cormode.2011,
+ year = {2011},
+ title = {{Synposes for Massive Data: Samples,  Histograms, Wavelets and Sketches}},
+ publisher = {{NOW publishers}},
+ series = {{Foundations and Trends in Databases}},
+ editor = {Cormode, Graham and Garofalakis, Minos and Haas, Peter and Jermaine, Chris}
+}
+
+
+@incollection{Cormode.2011b,
+ abstract = {Sketch techniques have undergone extensive development within the past few
+
+years. They are especially appropriate for the data streaming scenario, in
+
+which large quantities of data flow by and the the sketch summary must
+
+continually be updated quickly and compactly.  Sketches, as presented here,
+
+are designed so that the update caused by each new piece of data is largely
+
+independent of the current state of the summary.  This design choice makes
+
+them faster to process, and also easy to parallelize.
+
+``Frequency based sketches'' are concerned with summarizing the
+
+observed frequency distribution of a dataset.  From these sketches,
+
+accurate estimations of individual frequencies can be extracted.  This
+
+leads to algorithms to find the approximate heavy hitters (items which
+
+account for a large fraction of the frequency mass) and quantiles (the
+
+median and its generalizations).  The same sketches are also used to
+
+estimate (equi)join sizes between relations, self-join sizes and range
+
+queries.  These can be used as primitives within more complex mining
+
+operations, and to extract wavelet and histogram representations of
+
+streaming data.
+
+A different style of sketch construction leads to sketches for
+
+distinct-value queries.  As mentioned above, using a sample to estimate the
+
+answer to a COUNT DISTINCT query does not give accurate results.  In
+
+contract, sketching methods which can make a pass over the whole data can
+
+provide guaranteed accuracy.  Once built, these sketches estimate not only
+
+the cardinality of a given attribute or combination of attributes, but also
+
+the cardinality of various operations performed on them, such as set
+
+operations (union and difference), and selections based on arbitrary
+
+predicates.},
+ author = {Cormode, Graham},
+ title = {{Sketch Techniques for Massive Data}},
+ url = {http://archive.dimacs.rutgers.edu/~graham/pubs/papers/sk.pdf},
+ publisher = {{NOW publishers}},
+ series = {{Foundations and Trends in Databases}},
+ editor = {Cormode, Graham and Garofalakis, Minos and Haas, Peter and Jermaine, Chris},
+ booktitle = {{Synposes for Massive Data: Samples,  Histograms, Wavelets and Sketches}},
+ year = {2011},
+ file = {Cormode 2011 - Sketch Techniques for Massive Data:C\:\\dev\\bt\\references\\Cormode 2011 - Sketch Techniques for Massive Data.pdf:pdf}
+}
+
+
 @article{Cugola.2012,
  author = {Cugola, Gianpaolo and Margara, Alessandro},
  year = {2012},

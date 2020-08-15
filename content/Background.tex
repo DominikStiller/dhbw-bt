@@ -42,16 +42,16 @@ The terms \enquote{stream processing} has been assigned a variety of meanings. M
 	[A stream processing system is] a type of data processing engine that is designed with infinite datasets in mind~\cite[p.~24]{Akidau.2018}.
 \end{quote}
 
-Accordingly, a stream is an \textit{unbounded} dataset that is infinite in size. Unboundedness means that a stream does not terminate and new data will arrive continuously. Therefore the dataset will never be complete Many data sources found in the real world produce data naturally as unbounded stream: sensors measurements, stock updates, user activities, credit card transactions, retail purchases, public transportation updates and business activities come from processes that are theoretically infinite (or at least very long-running), so we have to assume that they do not end. This is in contrast to \textit{bounded} datasets found in batch processing, which are regarded as complete.\footnote{This assumption can be made because there usually is a delay between data collection and data processing. Correct results can only be produced if this assumption holds and no data is late.}
+Accordingly, a \textit{stream} is an \textit{unbounded} dataset that is infinite in size. Unboundedness means that a stream does not terminate and new data will arrive continuously. Therefore the dataset will never be complete Many data sources found in the real world produce data naturally as unbounded stream: sensors measurements, stock updates, user activities, credit card transactions, retail purchases, public transportation updates and business activities come from processes that are theoretically infinite (or at least very long-running), so we have to assume that they do not end. This is in contrast to \textit{bounded} datasets found in batch processing, which are regarded as complete.\footnote{This assumption can be made because there usually is a delay between data collection and data processing. Correct results can only be produced if this assumption holds and no data is late.}
 
 The reason for the prevalence of batch processing despite the stream nature of most data stems from historical technical limitations of data collection~\cite[p.~29]{Kreps.2014}. Batch collection was the norm, be it for early census calculations or digital bulk dumps. Now we see a shift to more continuous data processing thanks to automation and digitization in the data collection process, which reduces latency but also requires new processing techniques. For the census example, this could mean to record births and deaths to produce continuous calculation counts.
 
 
 \subsubsection{Time Domains}
-A stream consist of records that usually contains information about an \textit{event}, i.e. something of interest that happens in the real world. These might, for example, be purchases, website views, temperature changes or the arrival of a bus at a stop. When processing an event stream, two time domains are involved~\cite[p.~29]{Akidau.2018}:
+A stream consist of \textit{records} that usually contains information about an \textit{event}, i.e. something of interest that happens in the real world. These might, for example, be purchases, website views, temperature changes or the arrival of a bus at a stop. When processing an event stream, two time domains are involved~\cite[p.~29]{Akidau.2018}:
 \begin{itemize}
 	\item Event time: the time at which the event actually occured in the real world
-	\item Processing time: the time at which events are observed in the processing system
+	\item Processing time: the time at which events are observed at a given processing stage
 \end{itemize}
 
 These two time domains often do not coincide. The processing time can never be before the event time. However, the delay between the occurance and processing of an event can be arbitrarily large. Usually, there is some small base delay due to, for example, network latencies and resource limitations. Other events might occasionally arrive later than expected, for example, when a vehicle broadcasting its position enters a tunnel or people using their phone sit in an airplane. In case historic data are processed, there might even be years of delay between event and processing time. Note that processing time is the natural order in which events arrive and are processed, processing by event time order requires additional effort.
@@ -70,7 +70,7 @@ The relationship of the two time domains can be visualized by plotting the progr
 \subsection{Stream Processing Architectures}
 The unbounded nature of streams, requiring continuous processing, cannot be handled by batch processing engines like Hadoop. While academic and commercial stream processing engines (SEEP, Naiad, Microsoft StreamInsight, IBM Streams) have existed before~\cite[p.~37]{Katsifodimos.2015}, Apache Storm was the first one to find widespread adoption when it was released in 2011~\cite[p.~375]{Akidau.2018}. Like MapReduce, it solves many of the common challenges like fault-tolerance, networking and serialization and allows developers to focus on solving the actual problem~\cite{Marz.2014}.
 
-While Storm excelled at providing low-latency results, it did so by sacrificing features like exactly-once processing required for guaranteed correctness. This sparked the development of the Lambda architecture~\cite{Marz.2011}, shown in figure \ref{fig:background-lambda-architecture}. The batch layer produces correct results and handles fault-tolerance and scalability through the underlying processing engine, often Hadoop. Jobs are expressed in the MapReduce framework and store their results in a database optimized for batch writes and random reads for serving. The batch layer naturally lags behind real-time, therefore data is simultaneously processed in a real-time/speed layer, often implemented using Storm. The speed layer provides low-latency results but lacks in the correctness department due to approximative algorithms or possible system faults. This is acceptable, however, since speed layer results are overwritten by correct batch layer results once available. Even if a speed layer job fails, b batch layer results will be available at a later point. This requires the batch layer to store incoming data in an immutable and fault-tolerant way, also enabling recomputation in case processing code changes. By leveraging the two layers, the Lambda architecture provides low-latency, eventually-correct results~\cite[pp.~14--20,~p.~27--28]{Marz.2015}.
+While Storm excelled at providing low-latency results, it did so by sacrificing features like exactly-once processing required for guaranteed correctness. This sparked the development of the Lambda architecture~\cite{Marz.2011}, shown in figure \ref{fig:background-lambda-architecture}. The batch layer produces correct results and handles fault-tolerance and scalability through the underlying processing engine, often Hadoop. Jobs are expressed in the MapReduce framework and store their results in a database optimized for batch writes and random reads for serving. The batch layer naturally lags behind real-time, therefore data is simultaneously processed in a real-time/speed layer, often implemented using Storm. The speed layer provides low-latency results but lacks in the correctness department due to approximative algorithms or possible system faults. This is acceptable, however, since speed layer results are overwritten by correct batch layer results once available. Even if a speed layer job fails, b batch layer results will be available at a later point. This requires the batch layer to store incoming data in an immutable and fault-tolerant way, also enabling recomputation in case processing code changes. By leveraging the two layers, the Lambda architecture provides low-latency, eventually-correct results~\cite[pp.~14--20,~pp.~27--28]{Marz.2015}.
 
 \begin{figure}
 	\centering
@@ -92,9 +92,9 @@ The Lambda architecture was born out of necessity since no framework could guara
 	\label{fig:background-kappa-architecture}
 \end{figure}
 
-Spark Streaming~\cite{Apache.2020c} was the first large-scale stream processing engine being suited for use in a Kappa architecture. While not a true streaming but rather micro-batch processing engine, the latency was low enough for most applications. Since micro-batching uses batch processing under the hood, consistency and correct results were guaranteed. However, Spark Streaming lacked support for event-time processing, therefore producing correct results only in case of in-order data or event-time-agnostic computations. Correctness is absolutely required for stream processing engines to achieve parity with batch processing engines. Tools for reasoning about time, and especially event time, are essential for dealing with unbounded streams~\cite[pp.~27--28]{Akidau.2018}. Sophisticated time handling with high flexibility was explored in Google's company-internal MillWheel~\cite{TylerAkidau.2013} framework and Dataflow~\cite{TylerAkidau.2015}processing models. Apache Flink~\cite{Katsifodimos.2015} was the first open-source framework to incorporate the ideas into a high-throughput, low-latency stream processing engine that supports event-time processing and guarantees correctness.
+Spark Streaming~\cite{Apache.2020c} was the first large-scale stream processing engine being suited for use in a Kappa architecture. While not a true streaming but rather micro-batch processing engine, the latency was low enough for most applications. Since micro-batching uses batch processing under the hood, consistency and correct results were guaranteed. However, Spark Streaming lacked support for processing in event-time order, therefore producing correct results only in case of in-order data or event-time-agnostic computations. Correctness is absolutely required for stream processing engines to achieve parity with batch processing engines. Tools for reasoning about time, and especially event time, are essential for dealing with unbounded streams~\cite[pp.~27--28]{Akidau.2018}. Sophisticated time handling with high flexibility was explored in Google's company-internal MillWheel~\cite{TylerAkidau.2013} framework and Dataflow~\cite{TylerAkidau.2015} processing models. Apache Flink~\cite{Katsifodimos.2015} was the first open-source framework to incorporate the ideas into a high-throughput, low-latency stream processing engine that supports event-time processing and guarantees correctness.
 
-Another contribution of Dataflow and Flink is the realization that batch and stream processing can be unified. Bounded batch datasets are effectively a section of an unbounded stream dataset, as shown in figure \ref{fig:background-bounded-unbounded-datasets}, and jobs can be specified using the same API and be executed on the same engine. However, bounded datasets are amenable to additional optimizations towards throughput at the cost of latency by increasing bundling sizes and computing processing stages successively instead of continuously~\cites[p.~35]{Katsifodimos.2015}[pp.~198--199]{Akidau.2018}. Such a unified processing engine decreases development and operations cost since code and infrastructure can be shared, and allows to balance latency and throughput based on the application.
+Another contribution of Dataflow and Flink is the realization that batch and stream processing can be unified. Bounded batch datasets are effectively a section of an unbounded stream dataset, as shown in figure \ref{fig:background-bounded-unbounded-datasets}, and jobs can be specified using the same API and be executed on the same engine. However, bounded datasets are amenable to additional optimizations towards throughput at the cost of latency by increasing bundling sizes and computing processing stages successively instead of continuously~\cites[p.~35]{Katsifodimos.2015}[pp.~198--199]{Akidau.2018}. Such a unified processing engine decreases development and operations cost since code and infrastructure can be shared, and allows to balance latency and throughput based on the use case.
 
 \begin{figure}
 	\centering
@@ -108,52 +108,119 @@ Another contribution of Dataflow and Flink is the realization that batch and str
 
 
 \subsection{Processing Patterns}
-stream processing patterns~\cite[p.~35]{Akidau.2018}:
+Streams requires processing patterns that support their unbounded nature. There are three major categories:~\cite[p.~35]{Akidau.2018}:
 \begin{description}
-	\item[Time-Agnostic] very simple because no reasoning about time, only logic-based on single record, like filtering or inner join
-	\item[Approximation] complicated algorithms like streaming k-means, some with provable error bounds
-	\item[Windowing] chopping up stream into bounded datasets, but not necessarily with fixed bounds like in batch but allow arbitrary windows (like session)
+	\item[Time-agnostic] When the processing logic is purely data-driven, ordering by time is irrelevant. This makes processing very simple because out-of-order records need not be accounted for, therefore this pattern is supported by even the most basic streaming systems. This includes record-by-record processing like filtering based on a record attribute but also inner joins, where a joined record is produced once the respective records from all input streams have been observed.\footnote{If many uncompleted joins are to be expected, a timeout-based garbage collection becomes necessary to limit memory requirements, introducing a time component.}
+	\item[Approximation] Approximation algorithms like sketches for frequency distribution or distinct-value queries~\cite{Cormode.2011b} are optimized to handle large quantities of data by trading exact correctness for computational feasability, albeit usually within some error bounds. However, they are often complicated which makes it difficult to invent new ones. Furthermore, they usually work only in processing time, limiting their applicability.
+	\item[Windowing] To handle the unboundedness and lack of completeness of streams, they can be chopped into bounded datasets known as \textit{windows}, which can be processed independently. For example, a stream can be divided into contiguous sections of \SI{1}{\minute}, and results like aggregations are computed per section. More complex, even arbitrary, windows are also possible. Note that this pattern includes many more time-based processing types that are not immediately obvious. For example, pattern recognition effectively builds a window for each stream record ending with the final record of the pattern, resulting in variable-length windows~\cite[p.~350]{Yu.2011}. Additionally, regular windows can be used to limit the records regarded for pattern matching and expire partial patterns to keep state size in check~\cite[p.~354]{Yu.2011}. Another example are outer joins, where a joined record can also be produced when the respective records have only been observed from some of the input streams. Outer joins on streams require a timeout after which a partial join should be produced, which effectively determines the window length, where the window contains all records that were regarded for a record's join.
 \end{description}
 
-windowing is what we call stream analytics
-relates multiple elements using time as ordering
-relation requires keeping state
+The focus of the rest of this thesis will be on the windowing pattern, since it has unique challenges compared to time-agnostic and approximative processing. Specifically, correct windowing of out-of-order streams requires event-time awareness, and relating data within those window requires keeping consistent and fault-tolerant state. We will refer to this type of stream processing as \textit{stream analytics}, since time and state are required for producing sophisticated and valuable insights. We will now regard these two challenges in depth.
 
 
 
-\subsection{Timely Processing}
-windowing as division of unbounded stream in bounded segments
-can be arbitrary, but usually time or count
-will focus on time, since count is effectively processing time
-fixed, sliding, session, fixed is special case of sliding window
-custom window using window assigner
+\subsection{Windowing}
+Windowing is a key technique for enabling processing of unbounded datasets which inherently lack completeness. Each window of a stream is a finite chunk that is a complete dataset in itself. In this section, we will look at window types and how latency and correctness can be balanced for the use case at hand.
 
-watermark might be too fast or too short
-triggers define result materialization in processing time
-repeated or based on watermarks as measure of completeness
-can also have early and late
-\begin{quote}Repeated update triggers are great for use cases in which we simply want periodic updates to our results over time and are fine with those updates converging toward correctness with no clear indication of when correctness is achieved.~\cite[p.~63]{Akidau.2018}\end{quote}
+Windows can either be non-keyed (windows apply to the stream as a whole) or keyed (the stream is divided into subsets by key, e.g., per user, to which windows are applied individually). Three commonly found window types are shown in figure \ref{fig:background-window-types}~\cite[p.~1794]{Akidau.2015}:
+\begin{description}
+	\item[Fixed/tumbling] Fixed windows are defined by a fixed-length temporal window size. For example, a fixed window of \SI{10}{\minute} divides the stream into subsets of data from 12:00 to 12:10, then 12:10 to 12:20, continuing that way until the processing is stopped. Windows may either be \textit{aligned} or \textit{unaligned} across keys, depending on if the windows of different keys start at the same time or are staggered by an offset, which spreads window completion load more evenly across time.
+	\item[Sliding/hopping]  Sliding windows are defined by a fixed window size and a fixed period. For example a sliding window of \SI{10}{\minute} starting every \SI{1}{\minute} divides the stream into subsets from 12:00 to 12:10, 12:01 to 12:11, so every record ends up in 10 windows. The window size is often an integer multiple of the period, and sliding windows can also be aligned or unaligned. Note that fixed windows are a a special case of sliding windows where size equals period.
+	\item[Session] Session windows are defined by a timeout gap to capture periods of activity. For example, user activity analysis on a website during one sitting is a common use case for session windows. Session windows are defined per key and the length depends on the data involved, therefore they are inherently unaligned. Because the window length cannot be defined in advance, they are one area where the stream processing excels compared to batch processing. Since sessions may span multiple bounded batch datasets, the dataset must be treated as unbounded. Otherwise, complex stitching is required~\cite[p.~35]{Akidau.2018}.
+\end{description}
+Apart from these time-based window types, there are also tuple-based windows that contain a fixed number of records. However, they are essentially a form of time-based windowswith incrementing logical timestamps~\cite[p.~47]{Ahmed.2018} and will therefore not be regarded further here.
 
-watermarks as heuristic, show different options
-difference between watermark and allowed lateness
-bounded out of orderness, ascending...
+\begin{figure}
+	\begin{subfigure}[c]{0.32\textwidth}
+		\centering
+		% \includegraphics[width=0.95\textwidth]{plot_outlier_spike}%
+		\subcaption{Fixed}
+	\end{subfigure}
+	\begin{subfigure}[c]{0.32\textwidth}
+		\centering
+		% \includegraphics[width=0.95\textwidth]{plot_outlier_levelshift}%
+		\subcaption{Sliding}
+	\end{subfigure}
+	\begin{subfigure}[c]{0.32\textwidth}
+		\centering
+		% \includegraphics[width=0.95\textwidth]{plot_outlier_drift}%
+		\subcaption{Session}
+	\end{subfigure}
+	\caption{Common window types}
+	\label{fig:background-window-types}
+\end{figure}
 
-result refinement mode when having multiple triggers (fire and purge)
+All windows can be defined in both time domains. When windowing by processing time, incoming data are buffered for the specified period and then processed, as shown in figure \ref{fig:background-window-domains-processing}. This is straigtforward because windows are complete as soon as the window time has passed, therefore there are no late data to handle. It works well for many monitoring scenarios, where insights about data as they are observed is desired. However, most use cases require processing of data in event-time order, but there might be an arbitrarily long delay between an event occuring and the event being processed, which changes the order of events. This can lead to incorrect results if not handled appropriately~\cite[p.~41]{Akidau.2018}. For example, when recognizing patterns, out-of-order data can result in matches that do not actually exist, and other matches might be missed. In billing applications, where correctness is paramount, quarterly reports might contain incorrect numbers if records end up in the wrong windows. Therefore, windowing by processing time is not sufficient in many cases.
 
-processing time is natural, event time requires special techniques
-analysis of data based on when they are observed as opposed to when they occur is usually not sufficient for correctness
-correct and latency are balancing with cost (more resources for fast and correct results)
-need to define measure of completeness to maximize correctness
-different methods for handling late data: retract old results, separate output, dismiss
-tradeoff completeness vs latency
+Windowing in the event-time domain, as shown in figure \ref{fig:background-window-domains-event} requires ordering the out-of-order data to assign them to the correct window. This requires extra effort because event time is not the natural time domain of processing. On the one hand, data need to be buffered longer until the window is closed, therefore windows of the same size are open much longer in event time than in processing time. This demands more resources, but optimizations can be made to, for example, store aggregates incrementally. What is more challenging, however, is judging the completeness of a window. If the event-time skew can be arbitrarily long, it is non-trivial to judge when all data for a specific event-time window have been observed. This simplest approach is to delay processing for a fixed amount of time. For example, if data is usually not delayed for more than \SI{30}{\second}, we can reasonably assumed that all data for this window has arrived when we close the window \SI{35}{\second} after a record with the window end timestamp has been observed. However, this is essentially a tradeoff between latency and completeness (and by extension, correctness), since waiting longer necessarily increases latency but also increases the probability that no data is missed. This black-and-white tradeoff is far from satisfactory for many use cases. Therefore, the Dataflow~\cite{Akidau.2015} model introduced fine-grained control over window semantics to balance correctness, latency and cost.
 
-based on processing time: simple and perfect measure of completeness, applicable in many cases where observation time is desired
+\begin{figure}
+	\begin{subfigure}[c]{0.49\textwidth}
+		\centering
+		% \includegraphics[width=0.95\textwidth]{plot_outlier_spike}%
+		\subcaption{Processing time}
+		\label{fig:background-window-domains-processing}
+	\end{subfigure}
+	\begin{subfigure}[c]{0.49\textwidth}
+		\centering
+		% \includegraphics[width=0.95\textwidth]{plot_outlier_levelshift}%
+		\subcaption{Event time}
+		\label{fig:background-window-domains-event}
+	\end{subfigure}
+	\caption{Windowing in different time domains}
+	\label{fig:background-window-domains}
+\end{figure}
 
-based on event time: required when event time is desired, requires more buffering than processing time, usually no perfect measure of completeness, therefore based on heuristic
+
+\subsubsection{Windowing in Dataflow}
+In the Dataflow, windowing is strictly event-time-based. However, processing-time windows are possible when assigning the arrival time as the event time. We will now look at the four aspects that enable a clear and flexible definition of windows. For a more detailed description, refer to~\cite[chapter~2]{Akidau.2018}
+
+\begin{description}
+	\item[Transformations] Transformations define what results are produced from the records in a window. This includes aggregations like summing and counting, training machine learning models or detecting anomalies. Depending on the specific transformation, individual records can either be accumulated and processed all at once when window results are \textit{materialized} (i.e. emitted and sent downstream for storage or further processing), or records can be aggregated eagerly to spread computation load more evenly and minimize state size.
+	\item[Windowing] Windowing determines which records are grouped together based on some strategy. This includes fixed, sliding and session windows, but custom strategies are supported as well. Custom strategies (but also the built-in ones) consist of window assignment, which assigns records to one or more windows, and optional window merging, which allows merging of windows for window evolution as more data arrive. For example, window merging is required for session windows when a record arrives that connects two sessions which were before separated by the timeout gap~\cite[pp.~136--146]{Akidau.2018}.
+	\item[Triggers] Where windowing determines the location of windows in event time, triggers specify when transformation results are materialized in processing time. This allows windows to be evaluated more than once, where each specific result of the window's transformation is referred to as \textit{pane}. There are two general types of triggers~\cite[p.~60]{Akidau.2018}:
+	\begin{itemize}
+		\item Repeated update triggers: these trigger window evaluation periodically, either after a specific count of records or at some processing-time frequency, such as every minute. The choice of period is primarily a tradeoff between latency and computation requirements.
+		\item Completeness triggers: these trigger window evaluation when they believe that all data for the window has been observed, and therefore the window is complete.
+	\end{itemize}
+	Repeated update triggers show evolving results over time that converge towards correctness, but they do not indicate when correctness is achieved~\cite[p.~63]{Akidau.2018}. Therefore, completeness triggers may be more appropriate for use cases where correctness is important.
+	\item[Output Mode] The output mode describes how different panes, i.e. subsequent evaluation results of a window, are related and refine previous results. Therefore, the choice is only relevant if windows are triggered multiple times. We will use the naming proposed in~\cite[p.~94]{Akidau.2018} instead of the original naming from the Dataflow paper for clarity. There are three types of output modes, with an example of two panes shown in table \ref{tab:background-output-modes}:
+	\begin{itemize}
+		\item Delta: upon triggering, the result is materialized and any stored state is discarded. Therefore, successive panes are independent of each other. For example, when summing input records, only the sum of all panes will yield the total sum for the window.
+		\item Value: upon triggering, the result is materialized but stored state is retained. Therefore, successive panes build on each other's results. For example, when summing input records, each pane contains the total sum for the window so far.
+		\item Value and retracting: upon triggering, the result is materialized and any stored state is discarded. Additionally, previous panes are explicitly retracted. For example, when summing input records, each pane contains two parts: the total sum for the window so far, and a retraction for the old sum.
+	\end{itemize}
+	The choice of output mode usually depends on the input expected by downstream consumers. Aggregating consumers might expect deltas, while databases that are updated with new data require values.
+\end{description}
+
+\begin{table}
+	\newcommand\heading[1]{\textcolor{white}{\textbf{\textsf{#1}}}}
+	\renewcommand{\arraystretch}{1.2}
+	\centering
+	\begin{tabularx}{\textwidth}{X l l l}
+	\rowcolor{black} ~ & \heading{Delta~~~~~~~} & \heading{Value~~~~~~~} & \heading{Value and Retracting~~~~~~} \vspace{2pt} \\
+	Pane 1: inputs=[3] & 3 & 3 & 3 \\
+	Pane 2: inputs=[6, 1] & 7 & 10 & 10, -3 \\
+	\textbf{Value of final pane} & 7 & 10 & 10 \\
+	\textbf{Sum of all panes} & 10 & 13 & 10
+	\end{tabularx}
+	\caption{Example of windowing output modes}
+	\label{tab:background-output-modes}
+\end{table}
+
+These four composable pieces provide flexible tools to balance correctness, latency and cost by adjusting trigger frequencies and output modes which also affects compute and memore requirements. Completeness triggers play an important role for correctness, but can be hard to implement, especially when event-time skew is highly variant. \textit{Watermarks} are an approach to indicating input completeness in the even-time domain~\cite[pp.~64--66]{Akidau.2018}. The watermark denotes the point in event time up to which the system believes all inputs with lower event timestamps have been observed. In other words, the watermark is an assertion that no more data with event timestamps earlier than the watermark will arrive. Completeness triggers can trigger window materialization once the watermark passes the window end in the belief that no more records will be assigned to that window. Note that watermarks must be monotonically increasing~\cite[p.~88]{Akidau.2018}.
+
+Watermarks can be a strict guarantee or an educated guess of completeness. Perfect watermarks are possible when the system has full knowledge of all input data, for example, when assigning arrival times as event times. In some cases, the data source itself might produce watermarks. Late data, i.e. data with a timestamp earlier than the watermark that arrive past the watermark, will never occur. In most practical applications, only heuristic watermarks that approximate a perfect watermark based on the available information are possible. Heuristic watermarks can be generated by incorporating knowledge of ordering within partitions or file growth rates~\cite[p.~66]{Akidau.2018}, but also as percentile watermarks~\cite[pp.~106--108]{Akidau.2018} based on the event-time skew distribution, if known. This would, for example, enable watermarking after 99\% of all data are believed to have been observed, decreasing latency by ignoring stragglers. Another common strategy is by specifying a fixed bound for event-time skew, limiting the expected out-of-orderness. For example, the watermark could always lag \SI{10}{\second} behind the latest known timestamp if we know that the event-time skew will never exceed \SI{10}{\second}.
+
+While watermarks are very useful to judge window completeness, they have two shortcomings~\cite[pp.~68--69]{Akidau.2018}. Watermarks may sometimes be too slow, which increases latency. This might either be the case because the data really have a high delay, or because the watermark generation overestimates the delay. On the other hand, heuristic watermarks might be too fast due to their approximate nature, in which case late data might arrive after the watermark. Therefore, watermark-based completeness triggers alone cannot provide both low-latency and correctness.
+
+This motivates the use of multiple triggers per window. Early repeated update triggers compensate for watermarks being too slow by periodically providing early results which are incomplete. A single on-time trigger based on the watermark materializes results which the system believes to be correct. In case the heuristic watermark was too fast, late repeated update triggers refine results when late data arrive. Often, the late trigger fires for every late data record. Note that the output mode needs to be set appropriately when windows might be triggered more than once. This ensures that downstream consumers process multiple panes per window correctly.
+
+Window state needs to be retained after the watermark when late triggers are enabled. Due to practical resource limitations, a maximum \textit{allowed lateness} in processing time must be specified. After a window is completed by a watermark, state is expired after the maximum allowed lateness. Any record that arrives later will be discarded. Since the value of data diminishes with time, trading off resource cost for data value is usually sensible
 
 
 
-\subsection{Stateful Processing}
+\subsection{State Consistency}
 \cite[Chapter~7]{Akidau.2018}
 Many applications, especially as complex ones as analytics require state
 e.g. partial matches or intermediate results of aggregations
