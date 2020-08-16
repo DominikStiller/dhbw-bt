@@ -12,7 +12,7 @@ A batch processing system takes a large amount of input data and runs a \textit{
 As the volume of data grew, dataset became too large to be handled by a single \gls{node} (we use the term \textit{node} to refer to an individual server in a cluster). This sparked the development of distributed processing engines like Hadoop~\cite{Apache.2020} (based on the MapReduce~\cite{Dean.2008} programming model) and Spark~\cite{Apache.2020b}. These frameworks tackle two common challenges of large-scale batch processing~\cites[p.~429]{Kleppmann.2017}[pp.~362--373]{Akidau.2018}:
 \begin{itemize}
 	\item Scalability: support for distributed processing across nodes requires orchestration and \textit{partitioning}, i.e. the division of the dataset into subsets that can be processed in parallel, possibly on different \glspl{node}
-	\item Fault-tolerance: guarantee of consistent and correct results even in case of job failures caused, for example, by hardware failure or scheduler-induced preemption
+	\item Fault tolerance: guarantee of consistent and correct results even in case of job failures caused, for example, by hardware failure or scheduler-induced preemption
 \end{itemize}
 Having a framework to handle these issues makes focusing on the actual problem much easier.
 
@@ -70,9 +70,9 @@ The relationship of the two time domains can be visualized by plotting the progr
 
 
 \subsection{Stream Processing Architectures}
-The unbounded nature of streams, requiring continuous processing, cannot be handled by batch processing engines like Hadoop. While academic and commercial stream processing engines (SEEP, Naiad, Microsoft StreamInsight, IBM Streams) have existed before~\cite[p.~37]{Katsifodimos.2015}, Apache Storm was the first one to find widespread adoption when it was released in 2011~\cite[p.~375]{Akidau.2018}. Like MapReduce, it solves many of the common challenges like fault-tolerance, networking and serialization and allows developers to focus on solving the actual problem~\cite{Marz.2014}.
+The unbounded nature of streams, requiring continuous processing, cannot be handled by batch processing engines like Hadoop. While academic and commercial stream processing engines (SEEP, Naiad, Microsoft StreamInsight, IBM Streams) have existed before~\cite[p.~37]{Katsifodimos.2015}, Apache Storm was the first one to find widespread adoption when it was released in 2011~\cite[p.~375]{Akidau.2018}. Like MapReduce, it solves many of the common challenges like fault tolerance, networking and serialization and allows developers to focus on solving the actual problem~\cite{Marz.2014}.
 
-While Storm excelled at providing low-latency results, it did so by sacrificing features like exactly-once processing required for guaranteed correctness. This sparked the development of the Lambda architecture~\cite{Marz.2011}, shown in figure \ref{fig:background-lambda-architecture}. The batch layer produces correct results and handles fault-tolerance and scalability through the underlying processing engine, often Hadoop. Jobs are expressed in the MapReduce framework and store their results in a database optimized for batch writes and random reads for serving. The batch layer naturally lags behind real-time, therefore data is simultaneously processed in a real-time/speed layer, often implemented using Storm. The speed layer provides low-latency results but lacks in the correctness department due to approximative algorithms or possible system faults. This is acceptable, however, since speed layer results are overwritten by correct batch layer results once available. Even if a speed layer job fails, b batch layer results will be available at a later point. This requires the batch layer to store incoming data in an immutable and fault-tolerant way, also enabling recomputation in case processing code changes. By leveraging the two layers, the Lambda architecture provides low-latency, eventually-correct results~\cite[pp.~14--20,~pp.~27--28]{Marz.2015}.
+While Storm excelled at providing low-latency results, it did so by sacrificing features like exactly-once processing required for guaranteed correctness. This sparked the development of the Lambda architecture~\cite{Marz.2011}, shown in figure \ref{fig:background-lambda-architecture}. The batch layer produces correct results and handles fault tolerance and scalability through the underlying processing engine, often Hadoop. Jobs are expressed in the MapReduce framework and store their results in a database optimized for batch writes and random reads for serving. The batch layer naturally lags behind real-time, therefore data is simultaneously processed in a real-time/speed layer, often implemented using Storm. The speed layer provides low-latency results but lacks in the correctness department due to approximative algorithms or possible system faults. This is acceptable, however, since speed layer results are overwritten by correct batch layer results once available. Even if a speed layer job fails, b batch layer results will be available at a later point. This requires the batch layer to store incoming data in an immutable and fault-tolerant way, also enabling recomputation in case processing code changes. By leveraging the two layers, the Lambda architecture provides low-latency, eventually-correct results~\cite[pp.~14--20,~pp.~27--28]{Marz.2015}.
 
 \begin{figure}
 	\centering
@@ -117,7 +117,7 @@ Streams require processing patterns that support their unbounded nature. There a
 	\item[Windowing] To handle the unboundedness and lack of completeness of streams, they can be chopped into bounded datasets known as \textit{windows}, which can be processed independently. For example, a stream can be divided into contiguous sections of \SI{1}{\minute}, and results like aggregations are computed per section. More complex, even arbitrary, windows are also possible. Note that this pattern includes many more time-based processing types that are not immediately obvious. For example, pattern recognition effectively builds a window for each stream record ending with the final record of the pattern, resulting in variable-length windows~\cite[p.~350]{Adaikkalavan.2011}. Additionally, regular windows can be used to limit the records regarded for pattern matching and expire partial patterns to keep state size in check~\cite[p.~354]{Adaikkalavan.2011}. Another example are outer joins, where a joined record can also be produced when the respective records have only been observed from some of the input streams. Outer joins on streams require a timeout after which a partial join should be produced, which effectively determines the window length, where the window contains all records that were regarded for a record's join.
 \end{description}
 
-The focus of the rest of this thesis will be on the windowing pattern, since it has unique challenges compared to time-agnostic and approximative processing. Specifically, correct windowing of out-of-order streams requires event-time awareness, and relating data within those window requires keeping consistent and fault-tolerant state. We will refer to this type of stream processing as \textit{stream analytics}, since time and state are required for producing sophisticated and valuable insights. We will now regard these two challenges from a stream processing job developer's perspective. For an elaborate overview of specific implementations of out-of-order-data management and fault-tolerant state management in early and modern stream processing frameworks, refer to~\cite[chapters~3--5]{Fragkoulis.2020}.
+The focus of the rest of this thesis will be on the windowing pattern, since it has unique challenges compared to time-agnostic and approximative processing. Specifically, correct windowing of out-of-order streams requires event-time awareness, and relating data within those window requires keeping consistent and fault-tolerant state. We will refer to this type of stream processing as \textit{stream analytics}, since time and state are required for producing sophisticated and valuable insights. Note that the term \enquote{stream analytics} is not well-defined in the literature and the boundary to other techniques like \gls{CEP} and Event Stream processing is blurry~\cites[p.~466]{Kleppmann.2017}{Bass.2007}. For our purpose, we consider any kind of sophisticated stream processing as stream analytics. We will now regard the challenges of time and state from a stream processing job developer's perspective. For an elaborate overview of specific implementations of out-of-order-data management and fault-tolerant state management in early and modern stream processing frameworks, refer to~\cite[chapters~3--5]{Fragkoulis.2020}.
 
 
 
@@ -210,9 +210,9 @@ In the Dataflow, windowing is strictly event-time-based. However, processing-tim
 	\label{tab:background-output-modes}
 \end{table}
 
-These four composable pieces provide flexible tools to balance correctness, latency and cost by adjusting trigger frequencies and output modes which also affects compute and memore requirements. Completeness triggers play an important role for correctness, but can be hard to implement, especially when event-time skew is highly variant. \textit{Watermarks} are an approach to indicating input completeness in the even-time domain~\cite[pp.~64--66]{Akidau.2018}. The watermark denotes the point in event time up to which the system believes all inputs with lower event timestamps have been observed. In other words, the watermark is an assertion that no more data with event timestamps earlier than the watermark will arrive. Completeness triggers can trigger window materialization once the watermark passes the window end in the belief that no more records will be assigned to that window. Note that watermarks must be monotonically increasing~\cite[p.~88]{Akidau.2018}.
+These four composable pieces provide flexible tools to balance correctness and latency by adjusting trigger frequencies and output modes, but also cost by affecting compute and memore requirements. Completeness triggers play an important role for correctness, but can be hard to implement, especially when event-time skew is highly variant. \textit{Watermarks} are an approach to indicating input completeness in the even-time domain~\cite[pp.~64--66]{Akidau.2018}. The watermark denotes the point in event time up to which the system believes all inputs with lower event timestamps have been observed. In other words, the watermark is an assertion that no more data with event timestamps earlier than the watermark will arrive. Completeness triggers can trigger window materialization once the watermark passes the window end in the belief that no more records will be assigned to that window. Note that watermarks must be monotonically increasing~\cite[p.~88]{Akidau.2018}.
 
-Watermarks can be a strict guarantee or an educated guess of completeness. Perfect watermarks are possible when the system has full knowledge of all input data, for example, when assigning arrival times as event times. In some cases, the data source itself might produce watermarks. Late data, i.e. data with a timestamp earlier than the watermark that arrive past the watermark, will never occur. In most practical applications, only heuristic watermarks that approximate a perfect watermark based on the available information are possible. Heuristic watermarks can be generated by incorporating knowledge of ordering within partitions or file growth rates~\cite[p.~66]{Akidau.2018}, but also as percentile watermarks~\cite[pp.~106--108]{Akidau.2018} based on the event-time skew distribution, if known. This would, for example, enable watermarking after 99\% of all data are believed to have been observed, decreasing latency by ignoring stragglers. Another common strategy is by specifying a fixed bound for event-time skew, limiting the expected out-of-orderness. For example, the watermark could always lag \SI{10}{\second} behind the latest known timestamp if we know that the event-time skew will never exceed \SI{10}{\second}.
+Watermarks can be a strict guarantee or an educated guess of completeness. Perfect watermarks are possible when the system has full knowledge of all input data, for example, when assigning arrival times as event times. In some cases, the data source itself might produce watermarks. Late data, i.e. data with a timestamp earlier than the watermark that arrive past the watermark, will never occur. In most practical applications, only heuristic watermarks that approximate a perfect watermark based on the available information are possible. Heuristic watermarks can be generated by incorporating knowledge of the sources~\cite[p.~66]{Akidau.2018}, but also in form of percentile watermarks~\cite[pp.~106--108]{Akidau.2018} based on the event-time skew distribution, if known. This would, for example, enable watermarking after 99\% of all data are believed to have been observed, decreasing latency by ignoring stragglers. Another common strategy is by specifying a fixed bound for event-time skew, limiting the expected out-of-orderness. For example, the watermark could always lag \SI{10}{\second} behind the latest known timestamp if we know that the event-time skew will never exceed \SI{10}{\second}.
 
 While watermarks are very useful to judge window completeness, they have two shortcomings~\cite[pp.~68--69]{Akidau.2018}. Watermarks may sometimes be too slow, which increases latency. This might either be the case because the data really have a high delay, or because the watermark generation overestimates the delay. On the other hand, heuristic watermarks might be too fast due to their approximate nature, in which case late data might arrive after the watermark. Therefore, watermark-based completeness triggers alone cannot provide both low-latency and correctness.
 
@@ -222,10 +222,10 @@ Window state needs to be retained after the watermark when late triggers are ena
 
 
 
-\subsection{State Consistency and Persistence}
+\subsection{State Consistency and Persistence}\label{sec:background-state}
 Any stream analytics solution that does not process streams record-by-record but correlates multiple records requires state. For windowing, state consists of intermediate aggregation results. For pattern recognition, state consists of partial matches. For online machine learning training, the state consists of the current model parameters. Since stream processing jobs are effectively intended to run forever, interruptions like node failures, infrastructure maintenance or code changes are inevitable. To ensure correct results, the state needs to be persisted in a fault-tolerant way. This is especially important, since unbounded datasets usually cannot be replayed in their entirety, either because they are not retained forever, or because it is computationally infeasible~\cite[pp.~216--218]{Akidau.2018}. Simply storing state externally in a database can become a bottleneck~\cite[pp.~1718--1719]{Carbone.2017}. Compare this with batch processing, where it is often assumed that the dataset can be reprocessed in its entirety until the job succeeded.
 
-Therefore, correct and efficient fault-tolerance in stream processing requires persistent state that can be checkpointed. This state needs to be exposed to the stream processing framework for management. To expose state, frameworks usually provide a flexible API with support for a variety of data structures~\cite[p.~228]{Akidau.2018}, often with efficient implementations of lists and maps~\cite[p.~1721]{Carbone.2017}. Apart from checkpointing for fault-tolerance, this allows state redistribution during cluster scaling and alleviates the developer of needing to implement efficient persistence~\cite[pp.~1718--1719]{Carbone.2017}.
+Therefore, correct and efficient fault tolerance in stream processing requires persistent state that can be checkpointed. This state needs to be exposed to the stream processing framework for management. To expose state, frameworks usually provide a flexible API with support for a variety of data structures~\cite[p.~228]{Akidau.2018}, often with efficient implementations of lists and maps~\cite[p.~1721]{Carbone.2017}. Apart from checkpointing for fault tolerance, this allows state redistribution during cluster scaling and alleviates the developer of needing to implement efficient persistence~\cite[pp.~1718--1719]{Carbone.2017}.
 
 After fault recovery, the processing framework needs to guarantee that any materialized results are identical to the results if no fault occured. This is required for \textit{consistency}~\cite[p.~15]{Fragkoulis.2020}. The key to consistent and correct results is \textit{exactly-once processing}. This means that every stream record is guaranteed to be processed exactly once even in case of failures. For example, assume that a job counts the number of records in a stream, as shown in figure \ref{fig:background-processing-semantics-example}. After having processed record 5, the job fails and needs to be restarted on another node. If the restarted job starts earlier than record 5, the total count will be higher than the actual count. This is referred to as \textit{at-least-once processing}, since each record is guaranteed to be processed at least once. On the other hand, of the restarted job starts after record 5, the total count will be lower than the actual count. This is called \textit{at-most-once processing}. Only if the job is guaranteed to be restarted from record 5 for exactly-once processing, the total count will be correct.
 
@@ -233,22 +233,22 @@ After fault recovery, the processing framework needs to guarantee that any mater
 	\begin{subfigure}[c]{\textwidth}
 		\centering
 		% \includegraphics[width=0.95\textwidth]{plot_outlier_spike}%
-		\subcaption{}
+		\subcaption{Example scenario}
 	\end{subfigure}
 	\begin{subfigure}[c]{\textwidth}
 		\centering
 		% \includegraphics[width=0.95\textwidth]{plot_outlier_spike}%
-		\subcaption{Processing time}
+		\subcaption{At-least-once}
 	\end{subfigure}
 	\begin{subfigure}[c]{\textwidth}
 		\centering
 		% \includegraphics[width=0.95\textwidth]{plot_outlier_levelshift}%
-		\subcaption{Event time}
+		\subcaption{At-most-once}
 	\end{subfigure}
 	\begin{subfigure}[c]{\textwidth}
 		\centering
 		% \includegraphics[width=0.95\textwidth]{plot_outlier_levelshift}%
-		\subcaption{Event time}
+		\subcaption{Exactly-once}
 	\end{subfigure}
 	\caption{Example of different processing semantics after failure recovery}
 	\label{fig:background-processing-semantics-example}
@@ -263,21 +263,45 @@ Most stream processing frameworks do not offer true exactly-once processing due 
 
 
 \section{Stream Transport}
-message queue, often ephemeral
-plain socket stream
-pubsub
+Having regarded streams as a concept, we now show how streams are physically manifested, stored and transported around. A \textit{stream transport} system is responsible for moving streams between producers, processing systems and consumers. In its simplest form, a direct TCP connection can transport records from upstream producers to downstream consumers. For low-latency applications, UDP multicasting can be used. Brokerless messaging libraries like ZeroMQ implement publish/subscribe messaging on top of these network protocols. Even HTTP and RPC requests can be used to push records from producers to consumers. However, such direct messaging methods fall short in terms of delivery guarantees and fault tolerance~\cite[pp.~441--441]{Kleppmann.2017}.
+
+Message brokers like RabbitMQ, ActiveMQ and Google Cloud PubSub provide a way to decouple producers and consumers using common protocols like AMQP or JMS. The broker can store records durably to cope with offline or slow consumers by persisting them on disk until delivery is acknowledged. Many are also distributed for fault tolerance in case of broker node crashes. The decoupling makes record transport asynchronous, since producers do not know when a message is delivered to consumers~\cite[p.~443]{Kleppmann.2017}. Broker-centric instead of direct messaging furthermore allows multiple consumers to receive a stream without needing to change the producer, enabling organizational scalability and flexibility~\cite[pp.~20--22]{Kreps.2014} as well as debugging and monitoring by peeking into the stream~\cite[pp.~31--32]{Kreps.2014}. There are two patterns when multiple consumers receive the same stream, as illustrated in figure \ref{fig:background-multiconsumer-patterns}~\cite[pp.~444--445]{Kleppmann.2017}. Load balancing means that each record is delivered to only one consumer, so processing load is spread over all consumers. Fan-out means that each record is delivered to all consumers, which allows for independent consumers to receive the full stream. Combinations of these two patterns using consumer groups are possible as well.
+
+\begin{figure}
+	\begin{subfigure}[c]{.49\textwidth}
+		\centering
+		% \includegraphics[width=0.95\textwidth]{plot_outlier_spike}%
+		\subcaption{Load balancing}
+	\end{subfigure}
+	\begin{subfigure}[c]{.49\textwidth}
+		\centering
+		% \includegraphics[width=0.95\textwidth]{plot_outlier_spike}%
+		\subcaption{Fan-out}
+	\end{subfigure}
+	\caption{Message distribution patterns with multiple consumers}
+	\label{fig:background-multiconsumer-patterns}
+\end{figure}
+
+However, when using message brokers as transport platform in streaming systems, they have a number of shortcomings. First, they might deliver records more than once in case of lost acknowledgements, which might break exactly-once semantics or require deduplication in the processing framework. Secondly, most brokers do not make guarantees about record order, which requires special consideration in the processing framework. Thirdly, message brokers are ephemeral by design, which means that messages are discarded in the broker once delivered~\cite[pp.~445--446]{Kleppmann.2017}. This prevents stream replay for fault recovery or reprocessing after processing code changes.
 
 
 
-\subsection{Immutable logs}
-append-only immutable log with persistency
+\subsection{Immutable Logs}
+Message brokers that use a log as data structure do not have the shortcomings of regular message brokers. A \textit{log} is an append-only sequence where each record is assigned a monotonically increasing number called \textit{offset}~\cite[pp.~1--3]{Kreps.2014}. Records are stored in the order they are appended and cannot be updated or deleted, therefore logs are immutable and are totally ordered. Log data structures are commonly found in databases for consistency and replication, but also in many distributed consensus systems~\cite[pp.~54--66]{Kleppmann.2016}. When used for streaming, producers append new records to the end of the log, and consumers receive records by reading the log sequentially. Once a consumer reaches the end of the log, it waits for new records to be appended. Fan-out for multiple consumers is trivial since records are retained.
 
-Reasons~\cite[p.~31]{Kreps.2014}
-\begin{itemize}
-	\item flexible consumers, also for debugging
-	\item ordering
-	\item Buffering and isolation, e.g. for backpressure handling and replay on node failure, important prerequisite for robustness and correctness
-\end{itemize}
+The total ordering solves the at-least-once delivery and out-of-orderness problems of traditional message brokers, since the offset enables consumers to know exactly which records they have or have not read yet. This offset can be part of state checkpointing as described when talking about state consistency in subsection~\ref{sec:background-state}. A configurable, possibly infinite, retention period instead of ephemeral records is feasible since performance does not degrade with increasing data size~\cite[p.~3]{Kreps.2011}. This enables stream replay which is required for exactly-once processing in case of faults. In fact, fault tolerance in many modern stream processing systems was only made possible by fundamentally relying on this ability of log-based sources~\cite[pp.~390--391]{Akidau.2018}. The ability to replay old data is also useful for reprocessing after bugfixes and for development and regression testing. While this capability is very common in batch processing, durable logs offer a robust and reliable streaming alternative~\cite[p.~390]{Akidau.2018}.
+
+Durable log transportation platforms also provide an isolation layer between producers and consumers~\cites[pp.~450--450]{Kleppmann.2017}[p.~32]{Kreps.2014}. The log acts as large buffer that prevents consumers from being overwhelmed by a high volume of data by allowing consumers to read records at their own pace. Once the produced volume decreases, the consumer can catch up without needing to worry about data loss. This moves backpressure handling from the consumer to the transport layer.
+
+A stream can be divided into \textit{partitions} that contain the same record types but are otherwise separate logs that can be read and written to independently from other partitions~\cite[pp.~24--26]{Kreps.2014}. This is shown in figure \ref{fig:background-log-partitions}. Partitions enable distributed logs, since each partition can be hosted on a different node for horizontal scalability. Additionally, partitions can be replicated to other nodes for fault tolerance. While each partition is still totally ordered within itself, but there is no global order between partitions. However, if the processing job handles the partitions independently (e.g., in keyed windows with all records of a key being in the same partition), this is acceptable.
+
+\begin{figure}
+	\centering
+	% \includegraphics[width=0.55\textwidth]{plot_background_time_skew_events}
+	FIGURE OF PARTITIONS
+	\caption[Log partitioning]{Log partitioning: each partition is an independent log with internal total order}
+	\label{fig:background-log-partitions}
+\end{figure}
 
 
 
