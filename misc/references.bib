@@ -159,30 +159,6 @@ Complex Event Processing Systeme stellen eine vielversprechende M{\"o}glichkeit 
 }
 
 
-@misc{Apache.2020,
- abstract = {Apache Spark is a unified analytics engine for big data processing, with built-in modules for streaming, SQL, machine learning and graph processing.},
- author = {Apache},
- title = {{Apache Spark}},
- url = {https://spark.apache.org/}
-}
-
-
-@misc{Apache.2020b,
- author = {Apache},
- title = {{Apache Hadoop}},
- url = {https://hadoop.apache.org/}
-}
-
-
-@misc{Apache.2020c,
- abstract = {Spark Streaming makes it easy to build scalable and fault-tolerant streaming applications.},
- author = {Apache},
- title = {{Spark Streaming}},
- url = {https://spark.apache.org/streaming/},
- urldate = {2020-08-14}
-}
-
-
 @inproceedings{Bass.2007,
  author = {Bass, Tim},
  title = {{Mythbusters: Event Stream Processing Versus Complex Event Processing}},
@@ -196,6 +172,16 @@ Complex Event Processing Systeme stellen eine vielversprechende M{\"o}glichkeit 
  address = {New York},
  doi = {10.1145/1266894.1266896},
  file = {Bass 2007 - Mythbusters:C\:\\dev\\bt\\references\\Bass 2007 - Mythbusters.pdf:pdf}
+}
+
+
+@article{Carbone.,
+ abstract = {Distributed stateful stream processing enables the deployment and execution of large scale continuous computations in the cloud, targeting both low latency and high throughput. One of the most fundamental challenges of this paradigm is providing processing guarantees under potential failures. Existing approaches rely on periodic global state snapshots that can be used for failure recovery. Those approaches suffer from two main drawbacks. First, they often stall the overall computation which impacts ingestion. Second, they eagerly persist all records in transit along with the operation states which results in larger snapshots than required. In this work we propose Asynchronous Barrier Snapshotting (ABS), a lightweight algorithm suited for modern dataflow execution engines that minimises space requirements. ABS persists only operator states on acyclic execution topologies while keeping a minimal record log on cyclic dataflows. We implemented ABS on Apache Flink, a distributed analytics engine that supports stateful stream processing. Our evaluation shows that our algorithm does not have a heavy impact on the execution, maintaining linear scalability and performing well with frequent snapshots.},
+ author = {Carbone, Paris and F{\'o}ra, Gyula and Ewen, Stephan and Haridi, Seif and Tzoumas, Kostas},
+ title = {{Lightweight Asynchronous Snapshots for Distributed Dataflows}},
+ url = {https://arxiv.org/pdf/1506.08603},
+ journal = {{ISBN 978-91-}},
+ file = {Carbone, Fóra et al - Lightweight Asynchronous Snapshots for Distributed:C\:\\dev\\bt\\references\\Carbone, Fóra et al - Lightweight Asynchronous Snapshots for Distributed.pdf:pdf}
 }
 
 
@@ -371,6 +357,20 @@ predicates.},
 }
 
 
+@article{Dayarathna.2018,
+ author = {Dayarathna, Miyuru and Perera, Srinath},
+ year = {2018},
+ title = {{Recent Advancements in Event Processing}},
+ pages = {1--36},
+ volume = {51},
+ number = {2},
+ issn = {0360-0300},
+ journal = {{ACM Computing Surveys}},
+ doi = {10.1145/3170432},
+ file = {Dayarathna, Perera 2018 - Recent Advancements in Event Processing:C\:\\dev\\bt\\references\\Dayarathna, Perera 2018 - Recent Advancements in Event Processing.pdf:pdf}
+}
+
+
 @article{Dean.2008,
  author = {Dean, Jeffrey and Ghemawat, Sanjay},
  year = {2008},
@@ -382,6 +382,19 @@ predicates.},
  journal = {{Communications of the ACM}},
  doi = {10.1145/1327452.1327492},
  file = {Dean, Ghemawat 2008 - MapReduce:C\:\\dev\\bt\\references\\Dean, Ghemawat 2008 - MapReduce.pdf:pdf}
+}
+
+
+@book{Etzion.2011,
+ author = {Etzion, Opher and Niblett, Peter},
+ year = {2011},
+ title = {{Event processing in action}},
+ url = {http://www-di.inf.puc-rio.br/~endler/courses/RT-Analytics/transp/Books/Event%20Processing%20in%20Action.pdf},
+ address = {Greenwich 74° w. long.},
+ urldate = {2020-08-17},
+ publisher = {Manning},
+ isbn = {9781935182214},
+ file = {Etzion, Niblett 2011 - Event processing in action:C\:\\dev\\bt\\references\\Etzion, Niblett 2011 - Event processing in action.pdf:pdf}
 }
 
 
@@ -399,6 +412,15 @@ predicates.},
  year = {2012},
  title = {{SmartSantander - WP4: D4.2 Description of implemented IoT services}},
  file = {Fernandes 2012 - SmartSantander:C\:\\dev\\bt\\references\\Fernandes 2012 - SmartSantander.pdf:pdf}
+}
+
+
+@misc{Fowler.2017,
+ author = {Fowler, Martin},
+ year = {2017},
+ title = {{What do you mean by ``Event-Driven''?}},
+ url = {https://martinfowler.com/articles/201701-event-driven.html},
+ urldate = {2020-08-17}
 }
 
 
@@ -440,6 +462,17 @@ predicates.},
 }
 
 
+@proceedings{Gokhale.2009,
+ year = {2009},
+ title = {{Proceedings of the Third ACM International Conference on Distributed Event-Based Systems: (DEBS 2009) : July 6-9, 2009, Nashville, TN, USA}},
+ address = {New York, N.Y.},
+ publisher = {{ACM Press}},
+ isbn = {9781605586656},
+ editor = {Gokhale, Aniruddha and Schmidt, Douglas C.},
+ doi = {10.1145/1619258}
+}
+
+
 @misc{Hazelcast.2019,
  abstract = {Micro-batch processing vs stream processing: Is micro-batch processing fast enough? Learn which approach is right for your data processing requirements.},
  author = {Hazelcast},
@@ -475,6 +508,49 @@ Eine wichtige Aufgabe f{\"u}r die IT der vernetzten Welt ist die maschinelle Aus
  title = {{High-frequency positioning}},
  url = {https://digitransit.fi/en/developers/apis/4-realtime-api/vehicle-positions/},
  urldate = {19.05.2020}
+}
+
+
+@inproceedings{Hinze.2009,
+ author = {Hinze, Annika and Sachs, Kai and Buchmann, Alejandro},
+ title = {{Event-based applications and enabling technologies}},
+ pages = {1},
+ publisher = {{ACM Press}},
+ isbn = {9781605586656},
+ editor = {Gokhale, Aniruddha and Schmidt, Douglas C.},
+ booktitle = {{Proceedings of the Third ACM International Conference on Distributed Event-Based Systems}},
+ year = {2009},
+ address = {New York, N.Y.},
+ doi = {10.1145/1619258.1619260},
+ file = {Hinze, Sachs et al. 2009 - Event-based applications and enabling technologies:C\:\\dev\\bt\\references\\Hinze, Sachs et al. 2009 - Event-based applications and enabling technologies.pdf:pdf}
+}
+
+
+@article{Hirzel.2014,
+ author = {Hirzel, Martin and Soul{\'e}, Robert and Schneider, Scott and Gedik, Bu{\u{g}}ra and Grimm, Robert},
+ year = {2014},
+ title = {{A catalog of stream processing optimizations}},
+ pages = {1--34},
+ volume = {46},
+ number = {4},
+ issn = {0360-0300},
+ journal = {{ACM Computing Surveys}},
+ doi = {10.1145/2528412},
+ file = {Hirzel, Soulé et al. 2014 - A catalog of stream processing:C\:\\dev\\bt\\references\\Hirzel, Soulé et al. 2014 - A catalog of stream processing.pdf:pdf}
+}
+
+
+@article{Hirzel.2018,
+ author = {Hirzel, Martin and Baudart, Guillaume and Bonifati, Angela and {Della Valle}, Emanuele and Sakr, Sherif and {Akrivi Vlachou}, Akrivi},
+ year = {2018},
+ title = {{Stream Processing Languages in the Big Data Era}},
+ pages = {29--40},
+ volume = {47},
+ number = {2},
+ issn = {0163-5808},
+ journal = {{ACM SIGMOD Record}},
+ doi = {10.1145/3299887.3299892},
+ file = {Hirzel, Baudart et al. 2018 - Stream Processing Languages:C\:\\dev\\bt\\references\\Hirzel, Baudart et al. 2018 - Stream Processing Languages.pdf:pdf}
 }
 
 
@@ -526,6 +602,7 @@ Eine wichtige Aufgabe f{\"u}r die IT der vernetzten Welt ist die maschinelle Aus
  edition = {1st edition},
  publisher = {{O'Reilly Media, Inc}},
  isbn = {9781491937280},
+ file = {http://www.worldcat.org/oclc/1099552886},
  file = {Kleppmann 2016 - Making Sense of Stream Processing:C\:\\dev\\bt\\references\\Kleppmann 2016 - Making Sense of Stream Processing.pdf:pdf}
 }
 
@@ -540,6 +617,20 @@ Eine wichtige Aufgabe f{\"u}r die IT der vernetzten Welt ist die maschinelle Aus
  publisher = {{O'Reilly Media}},
  isbn = {9781449373320},
  file = {Kleppmann 2017 - Designing data-intensive applications:C\:\\dev\\bt\\references\\Kleppmann 2017 - Designing data-intensive applications.pdf:pdf}
+}
+
+
+@article{Kleppmann.2019,
+ author = {Kleppmann, Martin and Beresford, Alastair R. and Svingen, Boerge},
+ year = {2019},
+ title = {{Online Event Processing: Achieving Consistency Where Distributed Transactions Have Failed}},
+ pages = {43--49},
+ volume = {62},
+ number = {5},
+ issn = {0001-0782},
+ journal = {{Communications of the ACM}},
+ doi = {10.1145/3312527},
+ file = {Kleppmann, Beresford et al 2019 - Online Event Processing:C\:\\dev\\bt\\references\\Kleppmann, Beresford et al 2019 - Online Event Processing.pdf:pdf}
 }
 
 
@@ -647,7 +738,6 @@ Eine wichtige Aufgabe f{\"u}r die IT der vernetzten Welt ist die maschinelle Aus
  booktitle = {{2015 IEEE First International Smart Cities Conference (ISC2)}},
  year = {2015},
  doi = {10.1109/ISC2.2015.7366207},
- file = {http://ieeexplore.ieee.org/document/7366207/},
  file = {Morales, Garcia 2015 - GeoSmart cities:C\:\\dev\\bt\\references\\Morales, Garcia 2015 - GeoSmart cities.pdf:pdf}
 }
 

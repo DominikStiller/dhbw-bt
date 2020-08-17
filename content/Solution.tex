@@ -3,6 +3,8 @@ aspects: correct, fault-tolerant, low-latency and scalable
 
 
 \section{Design}
+general design advice: \cites{Kleppmann.2017}{Kreps.2014}
+
 \subsection{Architecture}
 separate clusters for ingest, streaming, processing and ui
 decoupling of ingestion and processing with persistent event log in between has benefits
@@ -53,6 +55,7 @@ job design considerations:
 \section{Deployment}
 \subsection{Infrastructure Considerations}
 capacity planning: https://www.ververica.com/blog/how-to-size-your-apache-flink-cluster-general-guidelines
+when stream can be partitioned for parallelization, many small instances can work well, but also might require more shuffling
 
 
 immutable infrastructure (keep short)
