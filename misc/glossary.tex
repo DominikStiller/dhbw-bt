@@ -2,3 +2,172 @@
 	name={node},
 	description={an individual server in a cluster}
 }
+\newglossaryentry{job}{
+	name={job},
+	description={a specific processing task}
+}
+\newglossaryentry{dataset partition}{
+	name={dataset partition},
+	description={a subset of a dataset, usually determined by a key}
+}
+\newglossaryentry{micro-batching}{
+	name={micro-batching},
+	description={a technique which decreases batch processing latency by decreasing batch size}
+}
+\newglossaryentry{stream}{
+	name={stream},
+	description={an unbounded dataset that will never be completed}
+}
+\newglossaryentry{batch dataset}{
+	name={batch dataset},
+	description={a bounded dataset that is complete at the time of processing}
+}
+\newglossaryentry{data in motion}{
+	name={data in motion},
+	description={a stream that shows the evolution of data over time}
+}
+\newglossaryentry{data at rest}{
+	name={data at rest},
+	description={a table that shows data at a specific point in time}
+}
+\newglossaryentry{event time}{
+	name={event time},
+	description={the time domain in which events occur}
+}
+\newglossaryentry{processing time}{
+	name={processing time},
+	description={the time domain in which events are observed at a given processing stage, never before \gls{event time}}
+}
+\newglossaryentry{record}{
+	name={record},
+	description={an element of a bounded or unbounded dataset}
+}
+\newglossaryentry{stream producer}{
+	name={stream producer},
+	description={a component of a streaming system that creates an \glslink{stream}{unbounded dataset}}
+}
+\newglossaryentry{stream consumer}{
+	name={stream consumer},
+	description={a component of a streaming system that receives an \glslink{stream}{unbounded dataset}}
+}
+\newglossaryentry{event-time skew}{
+	name={event-time skew},
+	description={a measure of the skew of event time perception in the processing system, identical with \gls{processing-time lag}}
+}
+\newglossaryentry{processing-time lag}{
+	name={processing-time lag},
+	description={a measure of the delay between processing time and event time, identical to \gls{event-time skew}}
+}
+\newglossaryentry{dataflow graph}{
+	name={dataflow graph},
+	description={a model for the directed data flow between sources, \glspl{operator} and sinks in a \gls{job} with \glspl{stream} moving along the edges from upstream to downstream}
+}
+\newglossaryentry{operator}{
+	name={operator},
+	description={a transformation of a \gls{stream} in the \gls{dataflow graph} of a \gls{job}}
+}
+\newglossaryentry{window}{
+	name={window},
+	description={a \glslink{batch dataset}{bounded} subset of another \glslink{batch dataset}{bounded} or \glslink{batch dataset}{unbounded} dataset, often grouping \glspl{record} within a certain time period}
+}
+\newglossaryentry{stream analytics}{
+	name={stream analytics},
+	description={any type of sophisticated stream processing that requires correct time handling and intermediate state}
+}
+\newglossaryentry{materialized result}{
+	name={materialized result},
+	description={the result of a \gls{window} evaluation that is emitted as \gls{stream} \gls{record} and sent to downstream consumers}
+}
+\newglossaryentry{window pane}{
+	name={window pane},
+	description={the result of a single \gls{window} evaluation of the same window with multiple triggers}
+}
+\newglossaryentry{watermark}{
+	name={watermark},
+	description={the timestamp of the point in \gls{event time} up to which the system believes all inputs with lower \glslink{event time}{event timestamps} have been observed, a perfect or heuristic measure of completeness}
+}
+\newglossaryentry{late data}{
+	name={late data},
+	description={data with an event timestamp earlier than the watermark that arrive past the watermark}
+}
+\newglossaryentry{allowed lateness}{
+	name={allowed lateness},
+	description={the maximum delay in processing time after the \gls{watermark} that a \glslink{late data}{late} \gls{record} may have without being discarded}
+}
+\newglossaryentry{checkpointing}{
+	name={checkpointing},
+	description={a technique for persisting in-memory state to a durable storage medium for fault tolerance}
+}
+\newglossaryentry{consistency}{
+	name={consistency},
+	description={a property of data processing meaning that a \gls{job} will produce the correct results, even in case of failures}
+}
+\newglossaryentry{exactly-once processing}{
+	name={exactly-once processing},
+	description={the guarantee that every \gls{record} of a dataset will only be processed once, even in case of failures}
+}
+\newglossaryentry{at-least-once processing}{
+	name={at-least-once processing},
+	description={the guarantee that every \gls{record} of a dataset will be processed at least once, but possibly more often}
+}
+\newglossaryentry{at-most-once processing}{
+	name={at-most-once processing},
+	description={the guarantee that every \gls{record} of a dataset will be processed at most once, but possibly not at all}
+}
+\newglossaryentry{effectively-once processing}{
+	name={effectively-once processing},
+	description={the guarantee that every \gls{record} of a dataset will affect the result as if it were processed exactly once, even though it might actually be processed more often for failure recovery}
+}
+\newglossaryentry{stream transport}{
+	name={stream transport},
+	description={the component in a streaming system responsible for storing and transporting \glspl{stream} between \glslink{stream producer}{producers} and \glslink{stream consumer}{consumers}}
+}
+\newglossaryentry{log}{
+	name={log},
+	description={an immutable and durable append-only data structure with total order of records}
+}
+\newglossaryentry{offset}{
+	name={offset},
+	description={the position of a \gls{record} in a \gls{log}, monotonically increasing due to total order}
+}
+\newglossaryentry{log partition}{
+	name={log partition},
+	description={a method for parallelizing logs where each partition itself is a log, multiple partitions of a log share no global order}
+}
+\newglossaryentry{primitive event}{
+	name={primitive event},
+	description={an occurrence within a particular system, often just called \emph{event}, can be a significant change or observation of some value}
+}
+\newglossaryentry{event type}{
+	name={event type},
+	description={a specification of attributes for \glspl{event occurence} that share the same semantic intent and structure}
+}
+\newglossaryentry{event occurence}{
+	name={event occurence},
+	description={a single event instance of a specific \gls{event type}}
+}
+\newglossaryentry{geo-event}{
+	name={geo-event},
+	description={a \gls{primitive event} with an associated geographical location}
+}
+\newglossaryentry{complex event}{
+	name={complex event},
+	description={an event resulting from the relation of multiple primitive events}
+}
+\newglossaryentry{event-based programming}{
+	name={event-based programming},
+	description={also known as \emph{event-driven architecture}, an interaction model between system components that uses events for communication}
+}
+\newglossaryentry{pattern recognition}{
+	name={pattern recognition},
+	description={a method for detecting subsets of events that match an \gls{event pattern} specification}
+}
+\newglossaryentry{event pattern}{
+	name={event pattern},
+	description={a template that specifies one or more combinations of events to for \gls{pattern recognition}}
+}
+
+% \newglossaryentry{}{
+% 	name={},
+% 	description={}
+% }
