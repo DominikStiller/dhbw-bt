@@ -107,6 +107,21 @@
 }
 
 
+@inproceedings{Agrawal.2008,
+ author = {Agrawal, Jagrati and Diao, Yanlei and Gyllstrom, Daniel and Immerman, Neil},
+ title = {{Efficient pattern matching over event streams}},
+ pages = {147},
+ publisher = {{Association for Computing Machinery}},
+ isbn = {9781605581026},
+ editor = {Shasha, Dennis and Wang, Jason T. L.},
+ booktitle = {{Proceedings of the 2008 ACM SIGMOD International Conference on Management of Data}},
+ year = {2008},
+ address = {[New York]},
+ doi = {10.1145/1376616.1376634},
+ file = {Agrawal, Diao et al. 2008 - Efficient pattern matching over event:C\:\\dev\\bt\\references\\Agrawal, Diao et al. 2008 - Efficient pattern matching over event.pdf:pdf}
+}
+
+
 @article{Ahmed.2018,
  abstract = {Future Generation Computer Systems, Accepted manuscript. doi:10.1016/j.future.2017.08.054},
  author = {Ahmed, Syed Hassan and Rani, Shalli},
@@ -185,6 +200,15 @@ Complex Event Processing Systeme stellen eine vielversprechende M{\"o}glichkeit 
 }
 
 
+@misc{Apache.2019,
+ author = {Apache},
+ year = {2019},
+ title = {{Apache Flink: A Deep-Dive into Flink's Network Stack}},
+ url = {https://flink.apache.org/2019/06/05/flink-network-stack.html},
+ urldate = {2020-08-19}
+}
+
+
 @misc{Apache.2020,
  author = {Apache},
  title = {{Apache Flink 1.11 Documentation: RabbitMQ Connector}},
@@ -199,6 +223,22 @@ Complex Event Processing Systeme stellen eine vielversprechende M{\"o}glichkeit 
  title = {{Powered By Apache Kafka}},
  url = {https://kafka.apache.org/powered-by},
  urldate = {2020-08-18}
+}
+
+
+@misc{Apache.2020c,
+ author = {Apache},
+ title = {{Apache Flink: Powered by Flink}},
+ url = {https://flink.apache.org/poweredby.html},
+ urldate = {2020-08-19}
+}
+
+
+@misc{Apache.2020d,
+ author = {Apache},
+ title = {{Apache Flink 1.11 Documentation: Operators}},
+ url = {https://ci.apache.org/projects/flink/flink-docs-release-1.11/dev/stream/operators/},
+ urldate = {2020-08-19}
 }
 
 
@@ -234,13 +274,25 @@ Complex Event Processing Systeme stellen eine vielversprechende M{\"o}glichkeit 
 }
 
 
-@article{Carbone.,
+@article{Carbone.2015,
+ author = {Carbone, Paris and Katsifodimos, Asterios and Ewen, Stephan and Markl, Volker and Haridi, Seif and Tzoumas, Kostas},
+ year = {2015},
+ title = {{Apache Flink: Stream and Batch Processing in a Single Engine}},
+ volume = {36},
+ number = {4},
+ journal = {{Bulletin of the IEEE Computer Society Technical Committee on Data Engineering}},
+ file = {Carbone, Katsifodimos et al. 2015 - Apache Flink:C\:\\dev\\bt\\references\\Carbone, Katsifodimos et al. 2015 - Apache Flink.pdf:pdf}
+}
+
+
+@article{Carbone.2015b,
  abstract = {Distributed stateful stream processing enables the deployment and execution of large scale continuous computations in the cloud, targeting both low latency and high throughput. One of the most fundamental challenges of this paradigm is providing processing guarantees under potential failures. Existing approaches rely on periodic global state snapshots that can be used for failure recovery. Those approaches suffer from two main drawbacks. First, they often stall the overall computation which impacts ingestion. Second, they eagerly persist all records in transit along with the operation states which results in larger snapshots than required. In this work we propose Asynchronous Barrier Snapshotting (ABS), a lightweight algorithm suited for modern dataflow execution engines that minimises space requirements. ABS persists only operator states on acyclic execution topologies while keeping a minimal record log on cyclic dataflows. We implemented ABS on Apache Flink, a distributed analytics engine that supports stateful stream processing. Our evaluation shows that our algorithm does not have a heavy impact on the execution, maintaining linear scalability and performing well with frequent snapshots.},
  author = {Carbone, Paris and F{\'o}ra, Gyula and Ewen, Stephan and Haridi, Seif and Tzoumas, Kostas},
+ year = {2015},
  title = {{Lightweight Asynchronous Snapshots for Distributed Dataflows}},
  url = {https://arxiv.org/pdf/1506.08603},
  journal = {{ISBN 978-91-}},
- file = {Carbone, Fóra et al. - Lightweight Asynchronous Snapshots for Distributed:C\:\\dev\\bt\\references\\Carbone, Fóra et al. - Lightweight Asynchronous Snapshots for Distributed.pdf:pdf}
+ file = {Carbone, Fóra et al. 2015 - Lightweight Asynchronous Snapshots for Distributed:C\:\\dev\\bt\\references\\Carbone, Fóra et al. 2015 - Lightweight Asynchronous Snapshots for Distributed.pdf:pdf}
 }
 
 
@@ -516,6 +568,18 @@ predicates.},
 }
 
 
+@book{Friedman.2016,
+ author = {Friedman, Ellen and Tzoumas, Kostas},
+ year = {2016},
+ title = {{Introduction to Apache Flink: Stream processing for real time and beyond}},
+ address = {Sebastopol CA},
+ edition = {First edition},
+ publisher = {{O'Reilly Media Inc}},
+ isbn = {9781491976586},
+ file = {Friedman, Tzoumas 2016 - Introduction to Apache Flink:C\:\\dev\\bt\\references\\Friedman, Tzoumas 2016 - Introduction to Apache Flink.pdf:pdf}
+}
+
+
 @article{Garcia.2020,
  abstract = {Water management is paramount in countries with water scarcity. This also affects agriculture, as a large amount of water is dedicated to that use. The possible consequences of global warming lead to the consideration of creating water adaptation measures to ensure the availability of water for food production and consumption. Thus, studies aimed at saving water usage in the irrigation process have increased over the years. Typical commercial sensors for agriculture irrigation systems are very expensive, making it impossible for smaller farmers to implement this type of system. However, manufacturers are currently offering low-cost sensors that can be connected to nodes to implement affordable systems for irrigation management and agriculture monitoring. Due to the recent advances in IoT and WSN technologies that can be applied in the development of these systems, we present a survey aimed at summarizing the current state of the art regarding smart irrigation systems. We determine the parameters that are monitored in irrigation systems regarding water quantity and quality, soil characteristics and weather conditions. We provide an overview of the most utilized nodes and wireless technologies. Lastly, we will discuss the challenges and the best practices for the implementation of sensor-based irrigation systems.},
  author = {Garc{\'i}a, Laura and Parra, Lorena and Jimenez, Jose M. and Lloret, Jaime and Lorenz, Pascal},
@@ -668,17 +732,6 @@ Eine wichtige Aufgabe f{\"u}r die IT der vernetzten Welt ist die maschinelle Aus
  year = {2018},
  doi = {10.1109/ICDE.2018.00169},
  file = {Karimov, Rabl et al. 2018 - Benchmarking Distributed Stream Data Processing:C\:\\dev\\bt\\references\\Karimov, Rabl et al. 2018 - Benchmarking Distributed Stream Data Processing.pdf:pdf}
-}
-
-
-@article{Katsifodimos.2015,
- author = {Katsifodimos, Asterios and Ewen, Stephan and Markl, Volker},
- year = {2015},
- title = {{Apache Flink: Stream and Batch Processing in a Single Engine}},
- volume = {36},
- number = {4},
- journal = {{Bulletin of the IEEE Computer Society Technical Committee on Data Engineering}},
- file = {Katsifodimos, Ewen et al. 2015 - Apache Flink:C\:\\dev\\bt\\references\\Katsifodimos, Ewen et al. 2015 - Apache Flink.pdf:pdf}
 }
 
 
@@ -1008,6 +1061,17 @@ Eine wichtige Aufgabe f{\"u}r die IT der vernetzten Welt ist die maschinelle Aus
  year = {2019},
  doi = {10.1109/ICDEW.2019.00-35},
  file = {Shahverdi, Awad et al. 2019 - Big Stream Processing Systems:C\:\\dev\\bt\\references\\Shahverdi, Awad et al. 2019 - Big Stream Processing Systems.pdf:pdf}
+}
+
+
+@proceedings{Shasha.2008,
+ year = {2008},
+ title = {{Proceedings of the 2008 ACM SIGMOD International Conference on Management of Data: 2008, Vancouver, Canada, June 09-12, 2008}},
+ address = {[New York]},
+ publisher = {{Association for Computing Machinery}},
+ isbn = {9781605581026},
+ editor = {Shasha, Dennis and Wang, Jason T. L.},
+ doi = {10.1145/1376616}
 }
 
 
