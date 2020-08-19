@@ -1,12 +1,16 @@
 
 
 \section{Methodology}
+for general performance of flink, refer to ...
+here, only evaluate our own solution
+
 \subsection{Latency Tracking}
 processing latency reasons:
 reasons for latency: https://flink.apache.org/news/2019/02/25/monitoring-best-practices.html\#monitoring-latency
 configuration can tradeoff latency vs throughput
 not the same as stream latency caused by waiting for watermark
 
+data creation must not become bottleneck~\cite[p.~73]{Lu.2014}
 
 \subsection{Volume Scaling}
 part of ingest
@@ -14,10 +18,14 @@ use recording and replay multiple times
 each replay in separate process with two threads: s3 reader and kafka producer
 payload adjustment
 
+average vehicle position message is 150 bytes as binary, 450 bytes with utf8 json
+
 
 \section{Results}
 
 describe cluster
+flink 1.11
+Kafka 2.5.0
 calculate cluster costs per day
 
 \subsection{Latency}
@@ -28,6 +36,10 @@ pass through to minimum latency possible
 maybe have late data
 use confidence interval
 
+evaluate event time latency for live events
+use difference between event timestamp and egress timestamp
+note that relies on proper time sync
+
 also show Kafka backlog
 
 \subsection{Log Size}
@@ -35,4 +47,9 @@ measure log size with json vs binary protobuf
 
 
 \section{Discussion}
+with checkpointing, fault tolerance is given, but free task slots must be available for failover
+maybe s3 is bottleneck, otherwise store in hdfs
+
+could not make emergency stop job work with rocksdb
+somehow, checkpointing makes it work
 
