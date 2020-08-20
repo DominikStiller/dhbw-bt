@@ -1,52 +1,102 @@
-aspects: correct, fault-tolerant, low-latency and scalable
+In this chapter, we regard an example solution for event stream analytics. While this is only one specific incarnation and many different designs are possible, it highlights important aspects that every solution needs to consider. The solution is independent of the use case presented in the next chapter and therefore applicable to many scenarios. \cite{Kleppmann.2017} is a good foundation for designing different distributed data processing solutions.
+
+
 
 
 
 \section{Design}
-general design advice: \cites{Kleppmann.2017}{Kreps.2014}
+The goal of the solution is to ingest data from an external stream source, process the stream to produce insights, and visualize those insights in real time. Arriving at those insights requires stateful processing in the correct order that goes beyond record-by-record transformations. Additionally, we want to see results in real time regardless of the data volume. This leads us to the  four requirements that have guided us through the past two chapters:
+\begin{itemize}
+	\item Correctness: results should be guaranteed to be correct through exactly-once event-time-order processing even if events arrive out of order and faults occur
+	\item Fault tolerance: the solution should guarantee consistent results and preserve state during faults without heavy recomputations
+	\item Low latency: results based on an ingested event should become available for visualization in (almost) real time (a latency of a few seconds is acceptable/inevitable, depending on the job)
+	\item Scalability: the solution should be able handle large volumes of data without performance degradation
+\end{itemize}
+Correctness and fault tolerance go hand in hand, but are in tension with low latency and scalability. Providing real-time results of computations at high volume requires a distributed stream processing platform that spans across nodes, but keeping consistent distributed state without impacting performance severely is challenging. The challenge becomes easier when using fast solid state drives, large memory pools and nodes with many CPU cores. We will disregard the cost factor in this design since we approach the problem from a technical perspective. However, the combination of Kafka and Flink for stream transport and stream processing can fulfill all of the four requirements even on inexpensive commodity hardware through efficient designs and implementations, and allows us to build jobs on top while taking care of the execution.
+
+
 
 \subsection{Architecture}
-separate clusters for ingest, streaming, processing and ui
-decoupling of ingestion and processing with persistent event log in between has benefits
-\begin{itemize}
-	\item handle backpressure without data loss
-	\item decouple ingest and processing -> other processing possible
-	\item replay in case of failure because not ephemeral
-\end{itemize}
+The components and stream flow of our architecture is shown in figure~\ref{fig:solution-architecture}. Kafka sits at the core to provide stream transport and storage and decouples producers and consumers. Having Kafka act as a durable buffer enables replay for fault tolerance but also allows consumers to not be overwhelmed by faster producers and producer to not be held up by failing consumers. Additionally, consumers can flexibly be added or start reading at different offsets without affecting the producer. While every stream only has a single consumer in our architecture, more consumers could be added, for example for monitoring, data warehousing or event-driven applications. This kind of centralized platform can democratize data and allow seamless integration and streamlined dataflow between different teams in an organization. The Zookeeper cluster required for Kafka broker coordination and Flink high availability runs on the nodes of the Kafka cluster, but can easily be extracted into a separate cluster for isolation in case of faults.
+
+Streams are not initially created within our solution but ingested from an external source. This source can be anything from database change captures over message queues to arbitrary event sources. The ingestion component is responsible for capturing these external events, filter and transform them, and write them to the appropriate Kafka topic. Therefore it basically acts as connector to the outside world. Analytics jobs running in the Flink cluster of the processing component consume these input streams and write their analytics results back into Kafka. The visualization component consumes the results streams in the backend and forwards them to the frontend, where they are displayed in real time in a format appropriate for the use case. This could, for example, be a dashboard for monitoring or a map for geospatial data. Having the visualization consume a stream is different from most traditional user interfaces which query a database or web service. We are using an end-to-end streaming design to embrace the continuous nature of our data. All components run on separate clusters of nodes but shared nodes are possible as well.
+
+\begin{figure}
+	\centering
+	% \includegraphics[width=0.55\textwidth]{plot_background_time_skew_events}
+    FIGURE OF ARCHITECTURE
+	\caption[Solution architecture]{Solution architecture: streams flow from ingestion through processing to visualization}
+	\label{fig:solution-architecture}
+\end{figure}
 
 
-\subsection{Event Schema}
+
+\subsection{Transport}
+two types of topics: input coming from ingest, analytics coming from
+topic setup
+one schema per topic
 common schema, serialized as protobuf for strong typing but still allow flexible payload with any
 Serialization formats~\cite[chapter~4]{Kleppmann.2017}
 show all definitions in appendix
 for larger cases, should use central schema registry like supported by confluent
+retention for 15 min, but can easily be changed
+enough for correctness since checkpointing period is lower
+
+number of partitions depends on volume
+use random assignment because flink handles event time order
+
+
 
 
 \subsection{Ingestion}
 Extensible design with ingestors and processors
 write to ingess topics
+filters and brings into common event schema
+for now not scalable, but dividing incoming stream into partitions that can be processed independently would enable
+could be replaced with Kafka connect if only simple processing is done
+mqtt events arrive out of order and are stored that way but okay since processing handles order
+
+mqtt ingestor
+
+mqtt replay ingestor
 
 
-\subsection{Flink Jobs}
-describe common functions (key selectors)
+
+\subsection{Processing}
+cluster setup
+session cluster
+number of task slots equals number of cores
+required task managers determined by number of jobs, parallelism and number of cores
+
 write to job topic
+source parallelism is adjusted to number of topic partitions
 
-job design considerations:
+all jobs use Kafka as sink and source
+Common job class which handles setup, kafka connection and protobuf serde
+bounded out of orderness watermarking by default since better heuristic watermarks are hard, with bounded out of orderness it is easy to integrate expected delay or percentile
+use rocksdb with incremental
+always event time and exactly once for correctness
+but can be changed in case ultra low latency is required
+need to balance correctness, latency and cost through watermark boundedness, allowed lateness and computing resources
+watermark frequency changes computation effort
+checkpointing frequency influences required retention period and recomputation effort in case of failure
+
+state size influences checkpointing time and required resources
+keep state size small by:
 \begin{itemize}
-	\item large sliding window with short period requires lots of memory
+	\item large sliding window with longer period
 	\item High allowed lateness increases time until records can be garbage collected
-	\item Accumulation functions only need to store a single value instead of all like in process function (aggregate early)
+	\item Accumulation functions only need to store a single value instead of all like in process function (aggregate eagerly)
 	\item only send relevant data to downstream tasks since data needs to be serialized, transferred and duplicates (for windows and CEP)
-	\item state size influences checkpointing time
-	\item watermarking and late data based on statistics (expected delay)
-	\item checkpointing frequency
-	\item retention period
-	\item parallelism vs core/n\_workers
-	\item watermark frequency changes computation effort
-	\item variable reuse if sequential (e.g. reuse output tuples instead of creating them for every record. what about downstream ops?)
-	\item need to balance correctness, latency and cost through watermark boundedness, allowed lateness and computing resources
 \end{itemize}
 
+
+
+\subsection{User Interface}
+backend and frontend
+backend only forwards events
+could also filter
+single user/all users receive same data
 
 
 
