@@ -104,15 +104,18 @@
 % \counterwithout{equation}{chapter}
 
 % minted
-\usemintedstyle{friendly}
-\newminted{python}{
+\setminted{
 	mathescape,
 	linenos,
 	numbersep=5pt,
-	frame=lines,
+	% frame=lines,
 	framesep=2mm
 }
+\usemintedstyle{friendly}
+\newminted{python}{}
 \newmintinline{python}{}
+\newminted{protobuf}{}
+\newmintinline{protobuf}{}
 
 % amsmath
 \DeclareMathOperator*{\argmax}{arg\,max}

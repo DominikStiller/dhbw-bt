@@ -1,4 +1,4 @@
-In this chapter, we regard an example solution for event stream analytics. While this is only one specific incarnation and many different designs are possible, it highlights important aspects that every solution needs to consider. The solution is independent of the use case presented in the next chapter and therefore applicable to many scenarios. \cite{Kleppmann.2017} is a good foundation for designing different distributed data processing solutions.
+In this chapter, we regard an example solution for event stream analytics. While this is only one specific incarnation and many different designs are possible, it highlights important aspects that every solution needs to consider. The solution is independent of the use case presented in the next chapter and therefore applicable to many scenarios. In any case, \cite{Kleppmann.2017} is a good foundation for designing distributed data processing solutions.
 
 
 
@@ -9,7 +9,7 @@ The goal of the solution is to ingest data from an external stream source, proce
 \begin{itemize}
 	\item Correctness: results should be guaranteed to be correct through exactly-once event-time-order processing even if events arrive out of order and faults occur
 	\item Fault tolerance: the solution should guarantee consistent results and preserve state during faults without heavy recomputations
-	\item Low latency: results based on an ingested event should become available for visualization in (almost) real time (a latency of a few seconds is acceptable/inevitable, depending on the job)
+	\item Low latency: results based on an ingested event should become available for visualization in (near) real time (a latency of a few seconds is acceptable/inevitable, depending on the job)
 	\item Scalability: the solution should be able handle large volumes of data without performance degradation
 \end{itemize}
 Correctness and fault tolerance go hand in hand, but are in tension with low latency and scalability. Providing real-time results of computations at high volume requires a distributed stream processing platform that spans across nodes, but keeping consistent distributed state without impacting performance severely is challenging. The challenge becomes easier when using fast solid state drives, large memory pools and nodes with many CPU cores. We will disregard the cost factor in this design since we approach the problem from a technical perspective. However, the combination of Kafka and Flink for stream transport and stream processing can fulfill all of the four requirements even on inexpensive commodity hardware through efficient designs and implementations, and allows us to build jobs on top while taking care of the execution.
@@ -17,9 +17,7 @@ Correctness and fault tolerance go hand in hand, but are in tension with low lat
 
 
 \subsection{Architecture}
-The components and stream flow of our architecture is shown in figure~\ref{fig:solution-architecture}. Kafka sits at the core to provide stream transport and storage and decouples producers and consumers. Having Kafka act as a durable buffer enables replay for fault tolerance but also allows consumers to not be overwhelmed by faster producers and producer to not be held up by failing consumers. Additionally, consumers can flexibly be added or start reading at different offsets without affecting the producer. While every stream only has a single consumer in our architecture, more consumers could be added, for example for monitoring, data warehousing or event-driven applications. This kind of centralized platform can democratize data and allow seamless integration and streamlined dataflow between different teams in an organization. The Zookeeper cluster required for Kafka broker coordination and Flink high availability runs on the nodes of the Kafka cluster, but can easily be extracted into a separate cluster for isolation in case of faults.
-
-Streams are not initially created within our solution but ingested from an external source. This source can be anything from database change captures over message queues to arbitrary event sources. The ingestion component is responsible for capturing these external events, filter and transform them, and write them to the appropriate Kafka topic. Therefore it basically acts as connector to the outside world. Analytics jobs running in the Flink cluster of the processing component consume these input streams and write their analytics results back into Kafka. The visualization component consumes the results streams in the backend and forwards them to the frontend, where they are displayed in real time in a format appropriate for the use case. This could, for example, be a dashboard for monitoring or a map for geospatial data. Having the visualization consume a stream is different from most traditional user interfaces which query a database or web service. We are using an end-to-end streaming design to embrace the continuous nature of our data. All components run on separate clusters of nodes but shared nodes are possible as well.
+The components and stream flow of our architecture are shown in figure~\ref{fig:solution-architecture}. Kafka sits at the core to provide stream transport and storage while decoupling producers and consumers. Having Kafka act as a durable buffer enables replay for fault tolerance, but also prevents consumers from being overwhelmed by faster producers and allows producers not to be held up by failing consumers. Additionally, consumers can flexibly be added or start reading at different offsets without affecting the producer. While every stream only has a single consumer in our architecture, more consumers could be added, for example for monitoring, data warehousing or event-driven applications. This kind of centralized platform can democratize data and allow seamless integration and streamlined dataflow between different teams in an organization. The Zookeeper cluster required for Kafka broker coordination and Flink high availability runs on the same nodes as the Kafka cluster, but can easily be extracted into a separate cluster for isolation in case of faults.
 
 \begin{figure}
 	\centering
@@ -29,21 +27,28 @@ Streams are not initially created within our solution but ingested from an exter
 	\label{fig:solution-architecture}
 \end{figure}
 
+Streams are not initially created within our solution but ingested from an external source. This source can be anything from database change captures over message queues to arbitrary event sources. The ingestion component is responsible for capturing these external events, filter and transform them, and write them to the appropriate Kafka topic. Therefore it basically acts as connector to the outside world. Analytics jobs running in the Flink cluster of the processing component consume these input streams and write their analytics results back into Kafka. The visualization component consumes the results streams in the backend and forwards them to the frontend, where they are displayed in real time in a format appropriate for the use case. This could, for example, be a dashboard for monitoring or a map for geospatial data. Having the visualization consume a stream is different from most traditional user interfaces which query a database or web service. We are using an end-to-end streaming design to embrace the continuous nature of our data. All components run on separate clusters of nodes but shared nodes are possible as well.
 
 
-\subsection{Transport}
-two types of topics: input coming from ingest, analytics coming from
-topic setup
-one schema per topic
-common schema, serialized as protobuf for strong typing but still allow flexible payload with any
-Serialization formats~\cite[chapter~4]{Kleppmann.2017}
-show all definitions in appendix
-for larger cases, should use central schema registry like supported by confluent
-retention for 15 min, but can easily be changed
-enough for correctness since checkpointing period is lower
 
-number of partitions depends on volume
-use random assignment because flink handles event time order
+\subsection{Transport and Storage}
+With the current set of components, there are two types of Kafka topics. Topics prefixed with \texttt{input} originate in the ingestion component, and topics starting with \texttt{analytics} are produced by the processing component. A clear and consistent naming scheme helps when adding more topics and producers but can be chosen freely. The number of partitions needs to be chosen based on the expected data volume, with random partitioning for even distribution if possible. This does not retain the order of incoming events but we rely on Flink for processing in the correct order. We use a replication factor of 3 for each topic since this provides a good balance between fault tolerance and performance. The number of total partitions determines the required cluster size. We use a short retention period which is higher than the Flink checkpointing period since we only use retention for fault tolerance, not replays from a much earlier point in time. Note that the disk size requirements increase proportionally to the data volume and retention period. We configure our cluster to be accessible from the outside from certain address ranges. While this is not recommended for production setups, it allows developers to run certain components on their local computer during development or peek into topics for debugging.
+
+We have one topic per event type, with all records having the same base schema. We use Protocol Buffers for schema specification since it has support for many languages, flexible records and schema evolution. There are two serialization modes. The binary mode creates compact messages, while the JSON mode creates human-readable messages suitable for debugging. Switching between these modes is simple and allows, for example, to use JSON during development but binary for production. Every record, whether input or analytics result, has the schema shown in listing~\ref{lst:solution-protobuf-event}. The \protobufinline/event_timestamp/ may contain the actual time the event occurred if the external source provides such a timestamp, or the end of the event time window for analytics results. The \protobufinline/ingestion_timestamp/ is the local system time in the ingestion and processing components before handing over the record to Kafka. The details are an arbitrary nested Protocol Buffers message which is specific to the event type. The \protobufinline/Any/ field type stores the nested type name and actual object to be able to deserialize the event with type safety. The structure of the type can be looked up in a type registry that is compiled into the components, but a central schema registry such as the one bundled with Confluent becomes indispensable when the number of producers and consumers grows
+
+\begin{listing}
+\begin{protobufcode}
+message Event {
+   google.protobuf.Timestamp event_timestamp = 1;
+   google.protobuf.Timestamp ingestion_timestamp = 2;
+   google.protobuf.Any details = 3;
+}
+\end{protobufcode}
+\unskip
+\caption{Common Protocol Buffers schema for all events}
+\label{lst:solution-protobuf-event}
+\end{listing}
+
 
 
 
