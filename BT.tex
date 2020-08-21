@@ -6,7 +6,7 @@
 
 \makeglossaries
 \include{misc/glossary}
-\include{misc/acronyms}
+\include{misc/abbreviations}
 
 \begin{document}
 	\pagenumbering{Roman}
@@ -41,7 +41,7 @@
 	%----------------------------------------------------------------------------
 	% Preface
 	%----------------------------------------------------------------------------
-	\printacronyms
+	\printacronyms[title={Abbreviations}]
 	\clearpage
 	
 	\addcontentsline{toc}{chapter}{\listfigurename}
@@ -50,8 +50,7 @@
 	\addcontentsline{toc}{chapter}{\listtablename}
 	\listoftables
 	\clearpage
-	\include{misc/symbols}
-	\renewcommand\listoflistingscaption{List of Source Codes}
+	\renewcommand\listoflistingscaption{List of Code Listings}
 	\listoflistings
 	\printnomenclature
 	\clearpage
@@ -70,7 +69,7 @@
 	\input{content/Background}
 	\chapter{Streaming Platforms}
 	\input{content/Streaming_Platforms}
-	\chapter{Solution Design and Implementation}
+	\chapter{Solution Design}
 	\input{content/Solution}
 	\obeylines
 	\chapter{Analytics Usecase}
