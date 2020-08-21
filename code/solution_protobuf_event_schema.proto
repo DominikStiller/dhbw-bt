@@ -1,0 +1,5 @@
+message Event {
+   google.protobuf.Timestamp event_timestamp = 1;
+   google.protobuf.Timestamp ingestion_timestamp = 2;
+   google.protobuf.Any details = 3;
+}

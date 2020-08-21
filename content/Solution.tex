@@ -17,7 +17,7 @@ Correctness and fault tolerance go hand in hand, but are in tension with low lat
 
 
 \subsection{Architecture}
-The components and stream flow of our architecture are shown in figure~\ref{fig:solution-architecture}. Kafka sits at the core to provide stream transport and storage while decoupling producers and consumers. Having Kafka act as a durable buffer enables replay for fault tolerance, but also prevents consumers from being overwhelmed by faster producers and allows producers not to be held up by failing consumers. Additionally, consumers can flexibly be added or start reading at different offsets without affecting the producer. While every stream only has a single consumer in our architecture, more consumers could be added, for example for monitoring, data warehousing or event-driven applications. This kind of centralized platform can democratize data and allow seamless integration and streamlined dataflow between different teams in an organization. The Zookeeper cluster required for Kafka broker coordination and Flink high availability runs on the same nodes as the Kafka cluster, but can easily be extracted into a separate cluster for isolation in case of faults.
+The components and stream flow of our architecture are shown in figure~\ref{fig:solution-architecture}.  All components run on separate clusters of nodes but shared nodes are possible as well. Kafka sits at the core to provide stream transport and storage while decoupling producers and consumers. Having Kafka act as a durable buffer enables replay for fault tolerance, but also prevents consumers from being overwhelmed by faster producers and allows producers not to be held up by failing consumers. Additionally, consumers can flexibly be added or start reading at different offsets without affecting the producer. While every stream only has a single consumer in our architecture, more consumers could be added, for example for monitoring, data warehousing or event-driven applications. This kind of centralized platform can democratize data and allow seamless integration and streamlined dataflow between different teams in an organization. The Zookeeper cluster required for Kafka broker coordination and Flink high availability runs on the same nodes as the Kafka cluster, but can easily be extracted into a separate cluster for isolation in case of faults.
 
 \begin{figure}
 	\centering
@@ -27,43 +27,35 @@ The components and stream flow of our architecture are shown in figure~\ref{fig:
 	\label{fig:solution-architecture}
 \end{figure}
 
-Streams are not initially created within our solution but ingested from an external source. This source can be anything from database change captures over message queues to arbitrary event sources. The ingestion component is responsible for capturing these external events, filter and transform them, and write them to the appropriate Kafka topic. Therefore it basically acts as connector to the outside world. Analytics jobs running in the Flink cluster of the processing component consume these input streams and write their analytics results back into Kafka. The visualization component consumes the results streams in the backend and forwards them to the frontend, where they are displayed in real time in a format appropriate for the use case. This could, for example, be a dashboard for monitoring or a map for geospatial data. Having the visualization consume a stream is different from most traditional user interfaces which query a database or web service. We are using an end-to-end streaming design to embrace the continuous nature of our data. All components run on separate clusters of nodes but shared nodes are possible as well.
+Streams are not initially created within our solution but ingested from an external source. This source can be anything from database change captures over message queues to arbitrary event sources. The ingestion component is responsible for capturing these external events, filter and transform them, and write them to the appropriate Kafka topic. Therefore it basically acts as connector to the outside world. Analytics jobs running in the Flink cluster of the processing component consume these input streams and write their analytics results back into Kafka. The visualization component consumes the results streams in the backend and forwards them to the frontend, where they are displayed in real time in a format appropriate for the use case. This could, for example, be a dashboard for monitoring or a map for geospatial data. Having the visualization consume a stream is different from most traditional user interfaces which query a database or web service. We are deliberately using an end-to-end streaming design to embrace the continuous nature of our data.
 
 
 
 \subsection{Transport and Storage}
 With the current set of components, there are two types of Kafka topics. Topics prefixed with \texttt{input} originate in the ingestion component, and topics starting with \texttt{analytics} are produced by the processing component. A clear and consistent naming scheme helps when adding more topics and producers but can be chosen freely. The number of partitions needs to be chosen based on the expected data volume, with random partitioning for even distribution if possible. This does not retain the order of incoming events but we rely on Flink for processing in the correct order. We use a replication factor of 3 for each topic since this provides a good balance between fault tolerance and performance. The number of total partitions determines the required cluster size. We use a short retention period which is higher than the Flink checkpointing period since we only use retention for fault tolerance, not replays from a much earlier point in time. Note that the disk size requirements increase proportionally to the data volume and retention period. We configure our cluster to be accessible from the outside from certain address ranges. While this is not recommended for production setups, it allows developers to run certain components on their local computer during development or peek into topics for debugging.
 
-We have one topic per event type, with all records having the same base schema. We use Protocol Buffers for schema specification since it has support for many languages, flexible records and schema evolution. There are two serialization modes. The binary mode creates compact messages, while the JSON mode creates human-readable messages suitable for debugging. Switching between these modes is simple and allows, for example, to use JSON during development but binary for production. Every record, whether input or analytics result, has the schema shown in listing~\ref{lst:solution-protobuf-event}. The \protobufinline/event_timestamp/ may contain the actual time the event occurred if the external source provides such a timestamp, or the end of the event time window for analytics results. The \protobufinline/ingestion_timestamp/ is the local system time in the ingestion and processing components before handing over the record to Kafka. The details are an arbitrary nested Protocol Buffers message which is specific to the event type. The \protobufinline/Any/ field type stores the nested type name and actual object to be able to deserialize the event with type safety. The structure of the type can be looked up in a type registry that is compiled into the components, but a central schema registry such as the one bundled with Confluent becomes indispensable when the number of producers and consumers grows
+We have one topic per event type, with all records having a common schema. We use \gls{protobuf} for schema specification since it has support for many languages, flexible records and schema evolution. There are two serialization modes. The binary mode creates compact messages, while the JSON mode creates human-readable messages suitable for debugging. Switching between these modes is simple and allows, for example, to use JSON during development but binary for production. Every record, whether input or analytics result, has the schema shown in listing~\ref{lst:solution-protobuf-event-schema}. The \protobufinline/event_timestamp/ may contain the actual time the event occurred if the external source provides such a timestamp, or the end of the event time window for analytics results. The \protobufinline/ingestion_timestamp/ is the local system time in the ingestion and processing components before handing over the record to Kafka. The \protobufinline/details/ are an arbitrary nested \gls{protobuf} message which is specific to the event type. The \protobufinline/Any/ attribute type stores the nested type name and actual object to be able to deserialize the event with type safety. The structure of the type can be looked up in a type registry that is compiled into the components, but a central schema registry such as the one bundled with Confluent becomes indispensable when the number of producers and consumers grows.
 
 \begin{listing}
-\begin{protobufcode}
-message Event {
-   google.protobuf.Timestamp event_timestamp = 1;
-   google.protobuf.Timestamp ingestion_timestamp = 2;
-   google.protobuf.Any details = 3;
-}
-\end{protobufcode}
-\unskip
+\inputminted{protobuf}{code/solution_protobuf_event_schema.proto}
 \caption{Common Protocol Buffers schema for all events}
-\label{lst:solution-protobuf-event}
+\label{lst:solution-protobuf-event-schema}
 \end{listing}
 
 
 
-
-
 \subsection{Ingestion}
-Extensible design with ingestors and processors
-write to ingess topics
-filters and brings into common event schema
-for now not scalable, but dividing incoming stream into partitions that can be processed independently would enable
-could be replaced with Kafka connect if only simple processing is done
-mqtt events arrive out of order and are stored that way but okay since processing handles order
+All input streams originate at an external source and therefore need to be integrated into the solution first. This is the task of the ingestion component. Incoming events are first filtered so only relevant ones are ingested into the system. Then they are converted to the specific \gls{protobuf} schema of the event type by selecting attributes and casting them to the right data types. Together with an extracted event timestamp, they are wrapped in the common event schema and produced to the appropriate Kafka topic. The current implementation of the ingestion component only supports a single node and no fault tolerance, but it can be extended in the future to run in a distributed fashion by dividing the input streams between multiple nodes. For example, each node could be assigned a mutually exclusive subset of source partitions for ingestion. Another alternative is to use an existing tool like Kafka Connect instead of a custom implementation if only simple transformations need to be done.
 
-mqtt ingestor
+Our implementation provides flexibility through two base abstractions that work together as shown in listing~\ref{lst:solution-ingestion-abtractions}\footnote{We use Python-inspired pseudocode for all code listings in this thesis for brevity.}. A \pythoninline/Connector/ connects to the external source to receive the raw event stream. Every raw event is processed by the \pythoninline/Processor/, which determines if an event should be filtered out and therefore not be ingested, or extracts the timestamp and event details with the correct \gls{protobuf} schema. These are then wrapped in the common event schema where the ingestion timestamp is added, serialized to the binary or JSON \gls{protobuf} wire format, and ingested into the appropriate Kafka topic. Multiple connector can be run in parallel.
 
-mqtt replay ingestor
+\begin{listing}[t]
+	\inputminted{python}{code/solution_ingestion_abstractions.py}
+	\caption{Interaction between connectors and processors}
+	\label{lst:solution-ingestion-abtractions}
+\end{listing}
+
+The \pythoninline/Connector/ and \pythoninline/Processor/ abstractions based on a common interface allow easy extension of the ingestion component for a wide range of different source types. We provide connectors for two types. The first connector subscribes to topics on an MQTT\footnote{MQTT is a publish--subscribe protocol commonly found in IoT applications. A central broker routes events from clients who publish them to a certain topic to clients which have subscribed that topics. Topics are often structured hierarchically, but the topic format can be chosen at will.} broker. The topics to subscribe to are determined by the processor. The second connector replays a recording of MQTT events captured with a custom tool. The recording is streamed from S3 while preserving the original timing between events. The processor can also modify the event, for example to adjust the event timestamp to the current time. Replaying previous recordings is useful for repeatability of evaluations. Decoupling the event source and pre-processing using the two abstractions allows us to use the same processor for multiple connectors.
 
 
 
@@ -97,7 +89,7 @@ keep state size small by:
 
 
 
-\subsection{User Interface}
+\subsection{Visualization}
 backend and frontend
 backend only forwards events
 could also filter
