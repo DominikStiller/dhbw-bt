@@ -1,30 +1,89 @@
-Looked for interesting use case which we can use to experiment with stream processing
-Wanted to use real data
+We implemented the event stream analytics solution presented in the previous chapter for an example use case. We wanted an interesting use case with diverse analytics possibilities that can be visualized well. Additionally, we wanted to use real data instead of mock data we generated ourselves, since real data are less predictable and can therefore better reveal real-world challenges of stream analytics. Smart and connected cities with public APIs provide an ideal source of streams since many different events occur in a system as complex as a city, and IoT facilitates digital access to these continuous streams in real time. Especially for public transportation many cities offer developers access to these data to integrate real-time information into, for example, route planning apps. Helsinki has one of the most mature public transportation API worldwide in terms of technology and documentation~\cite{AblyRealtime.2019}, therefore we will use its data as foundation for our use case.
 
-\section{HSL API Data}
-Available data
-statistics
+
+
+
+
+\section{HSL Public Transportation APIs}
+\gls{HSL} is the transportation authority for Helsinki and the surrounding municipalities. It oversees the operation of buses, trams, metros and overvehicles as well as ticket sale and inspection, but relies on third-party contractors for vehicle operation since it does not own any vehicles itself. HSL offers multiple publicly available APIs~\cite{HelsinkiRegionalTransportAuthority.2020b}:
+\begin{itemize}
+    \item High-frequency positioning (MQTT): vehicle positions every second, as well as events like arrivals at and departures from stops
+    \item Routing (GraphQL): itinerary planning and information about stops and timetables
+    \item Geocoding (HTTP): conversion between coordinates and places
+    \item Map (HTTP): map images with points of interests
+    \item Sales (HTTP): ticket sales and pricing information
+\end{itemize}
+We focus on the \gls{HFP} API since it provides us with a stream of real-time events, but we use other APIs to enrich events with more information.
+
+The HFP API is accessible through a single MQTT broker~\cite{HelsinkiRegionalTransportAuthority.2020}. The topic structure allows subscription to specific event types, vehicle types and routes, but multiple/all can be selected by using wildcards. Following event types are available, among others:
+\begin{itemize}
+    \item Vehicle position (every second): geographical coordinates
+    \item Vehicle has arrived at stop or departed from stop
+    \item Vehicle's doors are being opened or closed
+    \item Traffic light priority requests and responses
+\end{itemize}
+The JSON payload differs slightly between events, but usually contains an event timestamp, geographical coordinates (latitude and longitude), heading, speed, acceleration, as well as route and vehicle information.
+
+The volume of events over the course of a day is shown in figure~\ref{fig:usecase-hsl-daily-volume}. The volume is very low during the night and starts to increase after 05:00 with a first peak at 08:05 (1081 events per second). The volume remains steady until the second peak at 16:08 (1123 events per second), after which the volume slowly abates during the evening. This amounts to 58.4 million events per day. The delay between events occuring in the real world (event timestamp) and the timestamp of arrival at the ingestion component over the course of a minute is shown in figure~\ref{fig:usecase-hsl-ingestion-lag}. Note that this is only partially the event-time skew/processing-time lag, since these metrics are defined using the timestamp of arrival at the \emph{processing} component. Most of the events actually have a negative delay, which would mean that events are ingested before they happen. This is probably due to clock synchronization issues between the vehicles and our system (we synchronize the system time of our EC2 instances as recommended by AWS). However, this does not affect correctnes or latency, since all processing is done in event time. Of more significance is the high tail delay, with some events only arriving after more than \SI{30}{\second}. This confirms the need for explicit event-time processing, where we can explicitly treat these events as late. With processing-time ordering, they would end up in the wrong window. 
+
+\begin{figure}
+	\centering
+	\includegraphics[width=\textwidth]{plot_hsl_daily_event_volume.pdf}
+	\caption[Daily event volume of the HSL HFP API]{Daily event volume of the HSL HFP API: the volume is the highest during rush hour}
+	\label{fig:usecase-hsl-daily-volume}
+\end{figure}
+
+\begin{figure}
+	\centering
+	\includegraphics[width=\textwidth]{plot_hsl_ingestion_lag.pdf}
+	\caption[Ingestion lag of the HSL HFP API]{Delay between the occurrence of events from the HSL HFP API and their arrival at the ingestion component over time (min: \SI{-542}{\milli\second}, median: \SI{-465}{\milli\second}, 90th percentile: \SI{-120}{\milli\second}, 99th percentile: \SI{9279}{\milli\second}, max: \SI{34684}{\milli\second})}
+	\label{fig:usecase-hsl-ingestion-lag}
+\end{figure}
+
+
+
+
 
 \section{Analytics}
 wanted to have analytics with challenges in different areas: pattern recognition, external queries
+list of all jobs w figures from presentation
+
+\begin{description}
+    \item[Vehicle count] counts 
+\end{description}
 
 event time because IoT data often have high time skew
 use completeness trigger and repeated update trigger for windows
 value output mode
 
+
+
 \subsection{Geoaggregation}
 Division in cells
-enables aggregation
+enables aggregation and clustering
 provides way to reduce complexity with configurable resolution
+show tiling of all three
 
-late data handling
-watermark bounded out of orderness time vs allowed lateness is a tradeoff between latency and recomputation effort
-if only interested in latest window results: allowed lateness = window evaluation time
-late side output if fine-grained handling required
-but often if delayed: delayed much longer than allowed lateness, e.g. if bus is in tunnel instead of just small transmission delay
+use h3
+language bindings
+project on earth  with seams in ocean then divide
+show our settings
+
+
 
 \subsection{Flink Functions}
 key selectors
+
+late data handling
+analytics only used for visualization and not by any other consumer
+only interested in latest window results: allowed lateness = window evaluation time
+to accept refinements only until result from the next window are available
+but often if delayed: delayed much longer than allowed lateness, e.g. if bus is in tunnel instead of just small transmission delay
+cannot be used with evictor
+
+
+
+
 
 \section{Data Flow Example}
 

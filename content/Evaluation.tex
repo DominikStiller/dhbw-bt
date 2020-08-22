@@ -17,6 +17,7 @@ part of ingest
 use recording and replay multiple times
 each replay in separate process with two threads: s3 reader and kafka producer
 payload adjustment
+hard to split onto different nodes because adjustment requires shared state
 
 average vehicle position message is 150 bytes as binary, 450 bytes with utf8 json
 
