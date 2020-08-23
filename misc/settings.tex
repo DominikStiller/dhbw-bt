@@ -23,7 +23,7 @@
 \usepackage{geometry}
 \usepackage{textcomp}
 \usepackage{pifont}
-\usepackage[binary-units=true]{siunitx}
+\usepackage[binary-units=true, per-mode=symbol]{siunitx}
 \usepackage{setspace}
 \usepackage{array}
 \usepackage[outputdir=build]{minted}
@@ -103,6 +103,7 @@
 % \counterwithout{figure}{chapter}
 % \counterwithout{table}{chapter}
 % \counterwithout{equation}{chapter}
+\counterwithin{listing}{chapter}
 
 % minted
 \setminted{
@@ -110,14 +111,15 @@
 	linenos,
 	numbersep=5pt,
 	% frame=lines,
-	framesep=2mm
+	framesep=2mm,
+	fontsize=\small
+}
+\setmintedinline{
+	fontsize=\normalsize
 }
 \usemintedstyle{friendly}
-\newminted{python}{}
 \newmintinline{python}{}
-\newminted{protobuf}{}
 \newmintinline{protobuf}{}
-\newminted{java}{}
 \newmintinline{java}{}
 
 % amsmath
