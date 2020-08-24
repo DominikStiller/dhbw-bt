@@ -1,6 +1,6 @@
 {
-   "event_timestamp": "2020-07-27T10:31:50Z",
-   "ingestion_timestamp": "2020-07-27T10:31:51.852916Z",
+   "event_timestamp": "2020-07-27T08:24:50Z",
+   "ingestion_timestamp": "2020-07-27T08:24:51.852916Z",
    "details": {
       "@type": "type.googleapis.com/com.dxc.ptinsight.analytics.VehicleCount",
       "geocell": "617769472917241855",

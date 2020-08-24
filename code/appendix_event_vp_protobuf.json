@@ -1,0 +1,23 @@
+{
+   "event_timestamp": "2020-08-24T08:24:36.501Z",
+   "ingestion_timestamp": "2020-08-24T08:24:37.148598Z",
+   "details": {
+      "@type": "type.googleapis.com/com.dxc.ptinsight.input.VehiclePosition",
+      "vehicle": {
+         "operator": 12,
+         "number": 1327,
+         "type": "BUS"
+      },
+      "route": {
+         "id": "2550",
+         "operating_day": "2020-08-24",
+         "departure_time": "10:30",
+         "direction": false
+      },
+      "latitude": 60.191254,
+      "longitude": 24.80685,
+      "heading": 173,
+      "speed": 13.63,
+      "acceleration": 0.46
+   }
+}

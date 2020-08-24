@@ -1,0 +1,17 @@
+{
+   "event_timestamp": "2020-08-24T08:25:39.551Z",
+   "ingestion_timestamp": "2020-08-24T08:25:40.238112Z",
+   "details": {
+      "@type": "type.googleapis.com/com.dxc.ptinsight.input.Departure",
+      "vehicle": {
+         "operator": 12,
+         "number": 726,
+         "type": "BUS"
+      },
+      "latitude": 60.23831,
+      "longitude": 24.884214,
+      "stop": 1331105,
+      "scheduled_arrival": "2020-08-24T08:26:00Z",
+      "scheduled_departure": "2020-08-24T08:26:00Z"
+   }
+}
