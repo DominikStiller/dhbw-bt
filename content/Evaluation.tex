@@ -1,19 +1,47 @@
+Finally, we want to evaluate our solution with the public transportation use case. Specifially, we want to observe the relationship of the latency and scalability aspects. We assume that results are correct and consistent even in case of failures according to Flink's guarantees (apart from at-least-once results due to the lack of transaction support in the visualization Kafka client). Latency effectively describes the real-time capabilities of our solution at a certain data volume. We define two types of end-to-end latencies:
+\begin{itemize}
+   \item Processing latency: the delay between an event being observed by the ingestion component and results based on that event arriving at the visualization component, can be divided into functional latency (e.g., due to buffering for windowing or joining, especially when using completeness triggers with watermarks) and non-functional latency (e.g., network shuffling and operator computations)
+   \item Event latency: the delay between an event occurring and results based on that event arriving at the visualization component, consists of the processing latency plus the delay between the event's occurrence and ingestion
+\end{itemize}
+Note that the accuracy of the event latency is subject to time synchronization errors since we do not control the timestamping at the event source (i.e. the vehicles within the Helsinki public transportation system). This is not as much of an issue for the processing latency since we can synchronize the system clocks of all solution components using the same process. We will only regard the processing latency which comprises a major part of the event latency. The other part was already described in \ref{fig:usecase-hsl-ingestion-lag} but is not under our control.
+
+In this chapter, we only evaluate the performance of our solution. For a more general performance evaluation and comparison of Flink with other stream processing platforms, refer to~\cites{Karimov.2018}{Shahverdi.2019}.
+
+
+
 
 
 \section{Methodology}
-for general performance of flink, refer to ...
-here, only evaluate our own solution
+To achieve the goal of analyzing the relationship between latency and data volume, we need to add two extra components to our solution. First, we need a way to increase volume without changing the latency behavior. Therefore, all data must be plausible and the number of keys must increase with the volume scaling factor to affect the number of partitions. Secondly, we need a means of measuring the processing and event latencies.
+
+
 
 \subsection{Latency Tracking}
-processing latency reasons:
-reasons for latency: https://flink.apache.org/news/2019/02/25/monitoring-best-practices.html\#monitoring-latency
-configuration can tradeoff latency vs throughput
-not the same as stream latency caused by waiting for watermark
+The job of the latency tracker is to track events within the solution and measure timestamps at different points. Based on the differences of these timestamps, the latencies can be calculated. Flink comes with an in-built latency tracker. However, it only measures non-functional latency and therefore does not reflect the true processing latency. Additionally, it only works within the Flink cluster, but our processing latency is end-to-end to include the ingestion and visualization components as well.
 
-data creation must not become bottleneck~\cite[p.~73]{Lu.2014}
+Therefore, we use our custom in-band latency tracking system. The ingestion component regularly injects special records called \emph{latency markers} into the regular stream which are received and evaluated by an additional latency tracker component. Latency markers are mock events with plausible data but special values to distinguish them from real events without needing to treat them separately in processing job. Therefore they experience the same latency as real events, including windowing, network shuffling and checkpointing latency, which can be significant if the state is large.
+
+\begin{figure}
+	\centering
+   % \includegraphics[width=\textwidth]{plot_hsl_daily_event_volume.pdf}
+   FIGURE OF LATENCY TRACKING
+	\caption[In-band latency tracking system]{In-band latency tracking system: the latency tracker tracks and timestamps latency markers}
+	\label{fig:evaluation-latency-tracking}
+\end{figure}
+
+The flow of latency markers is shown in figure~\ref{fig:evaluation-latency-tracking}, with all timestamps marked $t_1$--$t_4$. The black arrows show the regular event flow which we presented in section~\ref{sec:usecase-dataflow}. The blue arrow is the end-to-end processing latency. The processing latency comprises several partial latencies between the individual components denoted by the green, red, and blue arrows. These can also be captured with our system, which allows us to better analyze where latencies come from. For example, when Flink slows down consumption due to backpressure, only the inside-processing latency increases. However, we cannot observe these partial latencies directly. While the ingestion and processing components add the ingestion timestamps just before producing the record to Kafka, we cannot measure the arrival time (i.e. the arrow tip) directly, since this would require modifying the existing components. Instead, we approximate these arrows by measuring the arrival time at the latency tracker. This assumes that the transport latency from Kafka to all downstream components is identical, i.e. records take the same time from Kafka to the processing and latency tracker components.
+
+Each latency marker appears twice in the system, once as input record and once as analytics result record. The key challenge is to make latency markers unique identifiable between these two instances even when they are subject to windowing, which collapses multiple events into a single one. This is required to be able to track them end-to-end. To solve this provlem, we must retain a one-to-one relationship between latency marker records and window results. Every window we use is keyed by either geocell or vehicle. Therefore, every latency marker has a unique geocell and vehicle number, so the latency marker will always be the only record in a window. Unique geocells are generated by spiraling outwards from an origin geocell. The $k$-th batch of geocells is the ring with distance $k$ from the origin cell. For example, the first batch of generated geocells are the direct neighbors of the origin cell, while the second batch are the neighbors of the first ring. H3 provides functions to easily generate these rings. We use \enquote{Point Nemo} as origin, the place on earth which is the farthest from any land. We can be relatively certain that no real events will originate from this point in the South Pacific. The vehicle number is generated randomly with a range outside of real numbers. Additionally, each latency marker uses a special value for the vehicle operator field.
+
+To track latency markers generated in the ingestion component, the latency tracker component consumes all input and analytics topics. For every record, it checks if the record is a latency marker. For input records, checking if the event has the special operator is sufficient. Since the operator is not part of the analytics results records, checking if the geocell is within a certain distance of the generation origin cell is required for analytics result records. When a latency marker is first observed in an input topic, it is added to an internal cache with the geocell as key. The marker is retained for \SI{5}{\minute}, which sets an upper bound for the latency that can be measured. The latency tracker then stores two timestamps for the newly observed latency marker. The first is the ingestion timestamp ($t_1$) added by the ingestion component. The second one is the arrival timestamp at the latency tracker ($t_2$). Once the matching analytics result arrives, two more timestamps are added. After the ingestion timestamp ($t_3$) added by the processing component and the arrival timestamp ($t_4$) are recorded, all four timestamps are written to a CSV file for later analysis.
+
+Note that this approach is highly specific for our use case and does not generalize to all situations. We generate special markers for each input topic and also need to generate pseudo-patterns to produce latency marker results for the emergency stop detection jobs. Also, we do not support latency tracking for the final stop distribution job (since latency markers cannot be used for querying the routing API) and the flow direction job (since latency markers are limited to a single geocell). While these limitations can be overcome, applying our approach to other use cases must guarantee that unique end-to-end tracking of latency markers is possible.
+
+
+
 
 \subsection{Volume Scaling}
-part of ingest
+integrated in ingestion
 use recording and replay multiple times
 each replay in separate process with two threads: s3 reader and kafka producer
 payload adjustment
@@ -25,20 +53,16 @@ calculate throughput
 
 \section{Results}
 
+data creation must not become bottleneck~\cite[p.~73]{Lu.2014}
 describe cluster
 flink 1.11
 Kafka 2.5.0
 calculate cluster costs per day
 single but separate node per job
 
-\subsection{Latency}
 latency: latency is the delay between the creation of an event and the time at which results based on this event become visible (https://flink.apache.org/news/2019/02/25/monitoring-best-practices.html\#monitoring-latency)
 
-cannot measure latency of flow direction and final stop
 
-maybe test very simple stateful job to see scalability without CEP and windowing
-pass through to minimum latency possible
-maybe have late data
 use confidence interval
 
 evaluate event time latency for live events
@@ -47,13 +71,15 @@ note that relies on proper time sync
 
 also show Kafka backlog
 
-\subsection{Log Size}
-measure log size with json vs binary protobuf
+show failover time for jobm and taskm which adds to latency
 
 
 \section{Discussion}
 with checkpointing, fault tolerance is given, but free task slots must be available for failover
 maybe s3 is bottleneck, otherwise store in hdfs
+
+when scaling higher to test limits, use records-lag-max metric to check consumer lag
+also monitor resource usage, using extra tool or Flink metrics
 
 could not make emergency stop job work with rocksdb
 somehow, checkpointing makes it work
