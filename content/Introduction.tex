@@ -1,32 +1,29 @@
-the earlier insight arrive, the higher the value
-historically, data arrived in batches, maybe once per day
-this gave rise to batch processing systems, now highly performance optimized
+Data processing and data analytics in particular have become essential tools in most industries. Being able to digitize business processes and manage large amounts of data can increase efficiency and decrease cost, but also enables completely new insight and business models. The demand for ever better and more scalable data processing gave rise to platforms like Hadoop and Spark which are widely used for many purposes. They process transactions to create bills and reports for accounting, they analyze purchase activities to reveal customer behavior to retailers, they provide the foundation for decision-making and planning in sectors like manufacturing or oil and gas, and they help governments combat climat change and improve citizen's quality of life.
+
+
+
+
 
 \section{Problem}
-lately, move from batch data to streaming data, since more data arrive continuously
-wide application range
+Traditionally, data was processed in batches. In many cases, the dataset was imported as bulk from transactional systems or other sources. Then, the processing job was executed once per day. There are two main problems with this approach. First, most data are actually produced as a continuous stream. Processing such an infinite stream in batches cannot unfold the data's full potential. Correctness might suffer if the dataset is incomplete, and some stream-specific operations like data-based windowing with variable size cannot easily be accomplished. Secondly, batch processing inherently has a high latency between data being created and results becoming available. This makes it unsuitable for applications where low-latency results are required in real-time without sacrificing the capabilities of mature batch systems. Additionally, insights decrease in value over time.
 
-processing is treating streaming data like batch data
-stream-native processing can improve correctness and stream-specific features (session windows)
-
-non trivial because of time and State
-time because events arrive out of order, state to enable complex tasks (pattern recognition)
-still want to have correctness and faulttolerance at low latency
-especially challenging at large scale
-
-This far-reaching sentiment was first expressed by Google researchers \citeauthor{TylerAkidau.2015} in \citeyear{TylerAkidau.2015}:
+Lately, more data sources provide data as continuous stream as digitalization of historically manual processes progresses and ubiquitous sensors capture events in the real world. Instead of processing these data with the traditional platforms, new stream processing frameworks which embrace the nature of stream data have been developed. The true extent of the paradigm change needed for this transition was aptly put into words by Google researchers \citeauthor{TylerAkidau.2015}:
 \begin{quote}
-	We propose that a fundamental shift of approach is necessary to deal with [the] evolved requirements in modern data processing. We as a field must stop trying to groom unbounded datasets into finite pools of information that eventually become complete, and instead live and breathe under the assumption that we will never know if or when we have seen all of our data, only that new data will arrive [and] old data may be retracted~\cite[p.~1792]{TylerAkidau.2015}.
+	We propose that a fundamental shift of approach is necessary to deal with [the] evolved requirements in modern data processing. We as a field must stop trying to groom unbounded datasets into finite pools of information that eventually become complete, and instead live and breathe under the assumption that we will never know if or when we have seen all of our data, only that new data will arrive [and] old data may be retracted.~\cite[p.~1792]{TylerAkidau.2015}.
 \end{quote}
 
-some existing platforms to solve problems
-we want to understand stream-native processing platforms
-get hands on experience with usecase
+There are two key challenges that need to be solved by stream processing platforms, especially for more complex jobs like stream analytics which correlates events over time for aggregation or pattern recognition. State in form of intermediate results needs to be maintained in a fault-tolerant manner for correct and consistent results even in the face of software or hardware failures. Additionally, the processing framework needs to be aware of the time at which events occurred since they might arrive delayed and out-of-order. Some stream processing frameworks that support both aspects have been developed recently to enable stream analytics at large scale. However, many software engineers, solution architects and technical managers are only beginning to understand the power of this new type of processing.
+
+
+
 
 
 \section{Scope}
-goal:
+We believe that a foundational understanding of stream processing concepts as well as a new mindset compared to batch processing is necessary to build successful stream analytics solutions. Therefore, we have a twofold goal for this thesis:
 \begin{itemize}
-    \item give an overview over correct, fault-tolerant, low-latency and scalable processing of streaming data
-    \item demonstrate concepts through the design and implementation of an exemplary stream processing solution
+    \item Build an understanding for designing correct, fault-tolerant, low-latency and scalable processing of stream datasets
+    \item Demonstrate important concepts and design considerations through the implementation of an event stream analytics solution for a public transportation use case
 \end{itemize}
+The four characteristics of correctness, fault tolerance, low latency and scalability serve as guide to connect the theoretical and practical aspects.
+
+We start by presenting the fundamental challenges of and common concepts behind stream processing (Chapter \ref{sec:background}). Then we present existing platforms for stream transport and processing (Chapter \ref{sec:platforms}). We select one of each to design a solution that can be used in many scenarios (Chapter \ref{sec:solution}). Next, we implement real-time analytics for a public transportation system on top of the solution (Chapter \ref{sec:usecase}). Finally, we evaluate the latency of analytics results under different levels of load (Chapter \ref{sec:evaluation}).

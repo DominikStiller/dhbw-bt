@@ -35,6 +35,8 @@ Each latency marker appears twice in the system, once as input record and once a
 
 To track latency markers generated in the ingestion component, the latency tracker component consumes all input and analytics topics. For every record, it checks if the record is a latency marker. For input records, checking if the event has the special operator is sufficient. Since the operator is not part of the analytics results records, checking if the geocell is within a certain distance of the generation origin cell is required for analytics result records. When a latency marker is first observed in an input topic, it is added to an internal cache with the geocell as key. The marker is retained for \SI{5}{\minute}, which sets an upper bound for the latency that can be measured. The latency tracker then stores two timestamps for the newly observed latency marker. The first is the ingestion timestamp ($t_1$) added by the ingestion component. The second one is the arrival timestamp at the latency tracker ($t_2$). Once the matching analytics result arrives, two more timestamps are added. After the ingestion timestamp ($t_3$) added by the processing component and the arrival timestamp ($t_4$) are recorded, all four timestamps are written to a CSV file for later analysis.
 
+The latency tracker is single-threaded. This means that it does not scale well and may measure wrong results under too much load. While we tried to parallelize the latency tracker by runnning multiple processes which each consume only one partition, the already observed latency markers must be shared between processes. Python does not have high-performance shared dictionaries, therefore this approach failed. The load on the latency tracker should be monitored to see if it may distort results.
+
 Note that this approach is highly specific for our use case and does not generalize to all situations. We generate special markers for each input topic and also need to generate pseudo-patterns to produce latency marker results for the emergency stop detection jobs. Also, we do not support latency tracking for the final stop distribution job (since latency markers cannot be used for querying the routing API) and the flow direction job (since latency markers are limited to a single geocell). While these limitations can be overcome, applying our approach to other use cases must guarantee that unique end-to-end tracking of latency markers is possible.
 
 
@@ -55,11 +57,16 @@ The volume scaler is integrated in the ingestion component. Instead of using the
 
 Before producing the event to Kafka, the details need to be adjusted to prevent distorted results. Therefore, we change the unique identifier of each vehicle to increase the number of keys. We do not adjust the geocells, since these would stay the same if the higher volume occurred naturally. We also offset each individual replay to naturally diversify the ingested events. For example, the first replay starts from the very beginning of the recording, while the second replay starts 1000 records later, and the third replay 2000 records later. We then need to adjust the event timestamp so simultaneously ingested events have approximately the same event timestamp. We do so by setting the event timestamp of all replays to be within \SI{0.1}{\second} of the latest event timestamp in the first replay.
 
-This latest timestamp is the only shared state between replay processes. However, this makes it hard to distribute the ingestion component across different nodes. Usually, every process runs on a single CPU core. Therefore, the possible scaling factor scales linearly with the number of cores but is also limited by it. If there are too many processes running, the desired volume is not achieved, records are not produced as quickly as they should be, and therefore the observed event time is slower than it actually was. Then, the ingestion component instead of the processing component becomes the bottleneck of the solution. This needs to be prevented during evaluation by ensuring that the ingestion rate is higher than the consumption rate of the Flink job~\cite[p.~73]{Lu.2014}.
+This latest timestamp is the only shared state between replay processes. However, this makes it hard to distribute the ingestion component across different nodes. Usually, every process runs on a single CPU core. Therefore, the possible scaling factor scales linearly with the number of cores but is also limited by it. If there are too many processes running, the desired volume is not achieved, records are not produced as quickly as they should be, and therefore the observed event time is slower than it actually was. Then, the ingestion component instead of the processing component becomes the bottleneck of the solution. This needs to be prevented during evaluation by ensuring that the ingestion rate is higher than the consumption rate of the Flink job~\cite[p.~73]{Lu.2014}. This can be achieved by monitoring the volume within the Kafka topics for plausibility.
 
 
 
 \section{Results}
+We are using the following setup on AWS for evaluation:
+\begin{itemize}
+   \item Kafka: 6\texttimes t3.large with Kafka 2.5.0, \SI{10}{\minute} retention, 4 partitions per topic with replication factor 3
+\end{itemize}
+All nodes use CentOS 6 with Linux kernel vXX. We deliberately choose small instances for Flink workers to see the effects of scaling quicker. The ingestion instance has many cores to support large scaling factors.
 
 describe cluster
 flink 1.11
@@ -68,6 +75,7 @@ calculate cluster costs per day
 single but separate node per job
 
 
+show how Kafka latency increases in setup 9
 
 use confidence interval
 
@@ -90,3 +98,4 @@ also monitor resource usage, using extra tool or Flink metrics
 could not make emergency stop job work with rocksdb
 somehow, checkpointing makes it work
 
+possibly error in latency measurement
