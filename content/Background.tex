@@ -71,8 +71,7 @@ While Storm excelled at providing low-latency results, it did so by sacrificing 
 
 \begin{figure}
 	\centering
-	% \includegraphics[width=0.55\textwidth]{plot_background_time_skew_events}
-	FIGURE OF LAMBDA ARCHITECUTURE
+	\includegraphics[width=\textwidth]{background_lambda_architecture}
 	\caption[Lambda architecture]{Lambda architecture: the batch layer provides correct results, the speed layer provides low-latency results}
 	\label{fig:background-lambda-architecture}
 \end{figure}
@@ -83,8 +82,7 @@ The Lambda architecture was born out of necessity since no framework could guara
 
 \begin{figure}
 	\centering
-	% \includegraphics[width=0.55\textwidth]{plot_background_time_skew_events}
-	FIGURE OF KAPPA ARCHITECUTURE
+	\includegraphics[width=\textwidth]{background_kappa_architecture}
 	\caption[Kappa architecture]{Kappa architecture: a single processing engine provides correct, low-latency results}
 	\label{fig:background-kappa-architecture}
 \end{figure}
@@ -102,7 +100,7 @@ Another contribution of Dataflow and Flink is the realization that batch and str
 	\label{fig:background-bounded-unbounded-datasets}
 \end{figure}
 
-Stream processing jobs often consist of multiple stages that are connected into a directed \emph{\gls{dataflow graph}}\footnote{Note that dataflow graphs are a general concept that are also found in batch processing, and are different from the Dataflow stream processing model.}~\cite[p.~30]{Kreps.2014}. The graph starts at one or more stream sources and ends at one or more stream sinks. \emph{\Glspl{operator}} in between can filter, aggregate, join and split streams or transform them otherwise. Operators are essentially the graph's vertices, with streams between sources, operators and sinks forming the edges. A vertex further to the start of the graph (i.e. the sources) is referred to as \emph{\glslink{dataflow graph}{upstream}}, and a vertex further to the end of the graph (i.e. the sinks) is referred to as \emph{\glslink{dataflow graph}{downstream}}. An example graph is shown in figure~\ref{fig:background-dataflow-graph}. The graph can contain also contain loops to enable iterative algorithms like incremental machine learning and graph processing~\cite[p.~33]{Carbone.2015}. Dataflow graphs provide a very flexible programming model for building stream processing jobs, but also allow the processing framework to apply optimizations like operator fusion and fission~\cite{Hirzel.2014}. Stream processing jobs can also be written in a higher-level abstraction like streaming SQL and pattern matching specifications~\cite{Hirzel.2018}, which are eventually compiled down to dataflow graphs~\cite[p.30]{Carbone.2015}.
+Stream processing jobs often consist of multiple stages that are connected into a directed \emph{\gls{dataflow graph}}\footnote{Note that dataflow graphs are a general concept also found in batch processing, and are different from the Dataflow stream processing model.}~\cite[p.~30]{Kreps.2014}. The graph starts at one or more stream sources and ends at one or more stream sinks. \emph{\Glspl{operator}} in between can filter, aggregate, join and split streams or transform them otherwise. Operators are essentially the graph's vertices, with streams between sources, operators and sinks forming the edges. A vertex further to the start of the graph (i.e. the sources) is referred to as \emph{\glslink{dataflow graph}{upstream}}, and a vertex further to the end of the graph (i.e. the sinks) is referred to as \emph{\glslink{dataflow graph}{downstream}}. An example graph is shown in figure~\ref{fig:background-dataflow-graph}. The graph can contain also contain loops to enable iterative algorithms like incremental machine learning and graph processing~\cite[p.~33]{Carbone.2015}. Dataflow graphs provide a very flexible programming model for building stream processing jobs, but also allow the processing framework to apply optimizations like operator fusion and fission~\cite{Hirzel.2014}. Stream processing jobs can also be written in a higher-level abstraction like streaming SQL and pattern matching specifications~\cite{Hirzel.2018}, which are eventually compiled down to dataflow graphs~\cite[p.30]{Carbone.2015}.
 
 \begin{figure}
 	\centering
