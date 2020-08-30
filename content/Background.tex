@@ -127,7 +127,7 @@ Windowing is a key technique for enabling processing of unbounded datasets which
 Windows can either be non-keyed (windows apply to the stream as a whole) or keyed (the stream is divided into subsets by key, e.g., per user, to which windows are applied individually). Three commonly found window types are shown in figure~\ref{fig:background-window-types}~\cite[p.~1794]{TylerAkidau.2015}:
 \begin{description}
 	\item[Tumbling/fixed] Tumbling windows are defined by a fixed-length temporal window size. For example, a tumbling window of \SI{10}{\minute} divides the stream into subsets of data from 12:00 to 12:10, then 12:10 to 12:20, continuing that way until the processing is stopped. Windows may either be aligned or unaligned across keys, depending on if the windows of different keys start at the same time or are staggered by an offset, which spreads window completion load more evenly across time.
-	\item[Sliding/hopping]  Sliding windows are defined by a fixed window size and a fixed period. For example a sliding window of \SI{10}{\minute} starting every \SI{1}{\minute} divides the stream into subsets from 12:00 to 12:10, 12:01 to 12:11, so every record ends up in 10 windows. The window size is often an integer multiple of the period, and sliding windows can also be aligned or unaligned. Note that fixed windows are a a special case of sliding windows where size equals period.
+	\item[Sliding/hopping] Sliding windows are defined by a fixed window size and a fixed period. For example a sliding window of \SI{10}{\minute} starting every \SI{1}{\minute} divides the stream into subsets from 12:00 to 12:10, 12:01 to 12:11, so every record ends up in 10 windows. The window size is often an integer multiple of the period, and sliding windows can also be aligned or unaligned. Note that fixed windows are a a special case of sliding windows where size equals period.
 	\item[Session] Session windows are defined by a timeout gap to capture periods of activity. For example, user activity analysis on a website during one sitting is a common use case for session windows. Session windows are defined per key and the length depends on the data involved, therefore they are inherently unaligned. Because the window length cannot be defined in advance, they are one area where the stream processing excels compared to batch processing. Since sessions may span multiple bounded batch datasets, the dataset must be treated as unbounded. Otherwise, complex stitching is required~\cite[p.~35]{Akidau.2018}.
 \end{description}
 Apart from these time-based window types, there are also tuple-based windows that contain a fixed number of records. However, they are essentially a form of time-based windows with incrementing logical timestamps~\cite[p.~47]{Ahmed.2018} and will therefore not be regarded further here.
@@ -304,7 +304,7 @@ A stream can be divided into \emph{\glslink{log partition}{partitions}} that con
 \begin{figure}
 	\centering
 	\includegraphics[width=0.8\textwidth]{background_topics_partitions}
-	\caption[Log partitioning]{Log partitioning: each partition is an independent log with internal total order. Load balancing is used as multi-consumer pattern, but multiple consumers could also read the same partition for fan-out.}
+	\caption[Log partitioning]{Log partitioning: each partition is an independent log with internal total order. Load balancing is used as multi-consumer pattern in this example, but multiple consumers could also read the same partition for fan-out.}
 	\label{fig:background-log-partitions}
 \end{figure}
 
@@ -326,7 +326,7 @@ Pattern recognition over event streams emanates from the event domain, therefore
 The \emph{\gls{event pattern}} is the template specifying one or more combinations of events to match the stream against. There is a wide range of pattern types that can be combined, but the most common include~\cite[pp.~219--236]{Etzion.2011}:
 \begin{itemize}
 	\item Logical expressions: \enquote{events of type A, B and C occured}
-	\item Comparisons: \enquote{an event of type A with attribute x > 10 occured}
+	\item Comparisons: \enquote{an event of type A with attribute x larger than 10 occured}
 	\item Temporally ordered sequences: \enquote{first, an event of type A, then multiple events of type B, and finally an event of type C occured}
 	\item Trends: \enquote{multiple events of type A occured with attribute x increasing monotonically}
 	\item Spatial distance: \enquote{events of type A and B occured within \SI{5}{\kilo\meter} of each other}
