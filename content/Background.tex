@@ -103,7 +103,7 @@ Stream processing jobs often consist of multiple stages that are connected into 
 \begin{figure}
 	\centering
 	\includegraphics[width=\textwidth]{background_dataflow_graph}
-	\caption[Example of a dataflow graph]{Example of a dataflow graph: two streams are joined, transformed and emitted as a single stream}
+	\caption[Example of a dataflow graph]{Example of a dataflow graph: two streams are transformed, joined, aggregated over windows and emitted}
 	\label{fig:background-dataflow-graph}
 \end{figure}
 
@@ -133,19 +133,18 @@ Windows can either be non-keyed (windows apply to the stream as a whole) or keye
 Apart from these time-based window types, there are also tuple-based windows that contain a fixed number of records. However, they are essentially a form of time-based windows with incrementing logical timestamps~\cite[p.~47]{Ahmed.2018} and will therefore not be regarded further here.
 
 \begin{figure}
-	\begin{subfigure}[c]{0.37\textwidth}
-		\centering
-		\includegraphics[width=0.95\textwidth]{background_window_types_tumbling}%
+	\begin{subfigure}[c]{0.35\textwidth}
+		\includegraphics[width=\textwidth]{background_window_types_tumbling}%
 		\subcaption{Tumbling}
 	\end{subfigure}
-	\begin{subfigure}[c]{0.30\textwidth}
-		\centering
-		\includegraphics[width=0.95\textwidth]{background_window_types_sliding}%
+	\hfill
+	\begin{subfigure}[c]{0.28\textwidth}
+		\includegraphics[width=\textwidth]{background_window_types_sliding}%
 		\subcaption{Sliding}
 	\end{subfigure}
-	\begin{subfigure}[c]{0.30\textwidth}
-		\centering
-		\includegraphics[width=0.95\textwidth]{background_window_types_session}%
+	\hfill
+	\begin{subfigure}[c]{0.28\textwidth}
+		\includegraphics[width=\textwidth]{background_window_types_session}%
 		\subcaption{Session}
 	\end{subfigure}
 	\caption[Common window types]{Common window types: aligned tumbling and sliding windows, and unaligned session windows. The elements contained in each window are denoted by the grey bars.}
@@ -157,15 +156,14 @@ All windows can be defined in both time domains. When windowing by processing ti
 Windowing in the event-time domain, as shown in figure~\ref{fig:background-window-domains-event} requires ordering the out-of-order data to assign them to the correct window. This requires extra effort because event time is not the natural time domain of processing. On the one hand, data need to be buffered longer until the window is closed, therefore windows of the same size are open much longer in event time than in processing time. This demands more resources, but optimizations can be made to, for example, store aggregates incrementally. What is more challenging, however, is judging the completeness of a window. If the event-time skew can be arbitrarily long, it is non-trivial to judge when all data for a specific event-time window have been observed. This simplest approach is to delay processing for a fixed amount of time. For example, if data is usually not delayed for more than \SI{30}{\second}, we can reasonably assumed that all data for this window has arrived when we close the window \SI{35}{\second} after a record with the window end timestamp has been observed. However, this is essentially a tradeoff between latency and completeness (and by extension, correctness), since waiting longer necessarily increases latency but also increases the probability that no data is missed. This black-and-white tradeoff is far from satisfactory for many use cases. Therefore, the Dataflow~\cite{TylerAkidau.2015} model introduced fine-grained control over window semantics to balance correctness, latency and cost.
 
 \begin{figure}
-	\begin{subfigure}[c]{0.49\textwidth}
-		\centering
-		\includegraphics[width=0.95\textwidth]{plot_background_window_domains_processing}%
+	\begin{subfigure}[c]{0.47\textwidth}
+		\includegraphics[width=\textwidth]{plot_background_window_domains_processing}%
 		\subcaption{Processing time}
 		\label{fig:background-window-domains-processing}
 	\end{subfigure}
-	\begin{subfigure}[c]{0.49\textwidth}
-		\centering
-		\includegraphics[width=0.95\textwidth]{plot_background_window_domains_event}%
+	\hfill
+	\begin{subfigure}[c]{0.47\textwidth}
+		\includegraphics[width=\textwidth]{plot_background_window_domains_event}%
 		\subcaption{Event time}
 		\label{fig:background-window-domains-event}
 	\end{subfigure}
@@ -227,34 +225,35 @@ Any stream analytics solution that does not process streams record-by-record but
 
 Therefore, correct and efficient fault tolerance in stream processing requires persistent state that can be checkpointed. \emph{\Gls{checkpointing}} is the process of persisting in-memory state to a durable storage medium. This state needs to be exposed to the stream processing framework for management. To expose state, frameworks usually provide a flexible API with support for a variety of data structures~\cite[p.~228]{Akidau.2018}, often with efficient implementations of lists and maps~\cite[p.~1721]{Carbone.2017}. Apart from checkpointing for fault tolerance, this allows state redistribution during cluster scaling and alleviates the developer of needing to implement efficient persistence~\cite[pp.~1718--1719]{Carbone.2017}.
 
-After fault recovery, the processing framework needs to guarantee that any materialized results are identical to the results if no fault occured. This is required for \emph{\gls{consistency}}~\cite[p.~15]{Fragkoulis.2020}. The key to consistent and correct results is \emph{\gls{exactly-once processing}}. This means that every stream record is guaranteed to be processed exactly once even in case of failures. For example, assume that a job counts the number of records in a stream, as shown in figure~\ref{fig:background-processing-semantics-example}. After having processed record 5, the job fails and needs to be restarted on another node. If the restarted job starts earlier than record 5, the total count will be higher than the actual count. This is referred to as \emph{\gls{at-least-once processing}}, since each record is guaranteed to be processed at least once. On the other hand, of the restarted job starts after record 5, the total count will be lower than the actual count. This is called \emph{\gls{at-most-once processing}}. Only if the job is guaranteed to be restarted from record 5 for exactly-once processing, the total count will be correct.
+After fault recovery, the processing framework needs to guarantee that any materialized results are identical to the results if no fault occured. This is required for \emph{\gls{consistency}}~\cite[p.~15]{Fragkoulis.2020}. The key to consistent and correct results is \emph{\gls{exactly-once processing}}. This means that every stream record is guaranteed to be processed exactly once even in case of failures. For example, assume that a job counts the number of records in a stream, as shown in figure~\ref{fig:background-processing-semantics-example}. After having processed record 5, the intermediate count is checkpointed but the job fails and needs to be restarted on another node. If the restarted job starts earlier than record 5, the total count will be higher than the actual count. This is referred to as \emph{\gls{at-least-once processing}}, since each record is guaranteed to be processed at least once. On the other hand, of the restarted job starts after record 5, the total count will be lower than the actual count. This is called \emph{\gls{at-most-once processing}}. Only if the job is guaranteed to be restarted from record 5 for exactly-once processing, the total count will be correct.
 
 \begin{figure}
-	\begin{subfigure}[c]{\textwidth}
-		\centering
-		% \includegraphics[width=0.95\textwidth]{plot_outlier_spike}%
+	\begin{subfigure}[c]{0.49\textwidth}
+		\includegraphics[width=\textwidth]{background_processing_semantics_scenario}%
 		\subcaption{Example scenario}
 	\end{subfigure}
-	\begin{subfigure}[c]{\textwidth}
-		\centering
-		% \includegraphics[width=0.95\textwidth]{plot_outlier_spike}%
+	\hfill
+	\begin{subfigure}[c]{0.49\textwidth}
+		\includegraphics[width=\textwidth]{background_processing_semantics_atleast}%
 		\subcaption{At-least-once}
 	\end{subfigure}
-	\begin{subfigure}[c]{\textwidth}
-		\centering
-		% \includegraphics[width=0.95\textwidth]{plot_outlier_levelshift}%
+	
+	\bigskip
+
+	\begin{subfigure}[c]{0.49\textwidth}
+		\includegraphics[width=\textwidth]{background_processing_semantics_atmost}%
 		\subcaption{At-most-once}
 	\end{subfigure}
-	\begin{subfigure}[c]{\textwidth}
-		\centering
-		% \includegraphics[width=0.95\textwidth]{plot_outlier_levelshift}%
+	\hfill
+	\begin{subfigure}[c]{0.49\textwidth}
+		\includegraphics[width=\textwidth]{background_processing_semantics_exactly}%
 		\subcaption{Exactly-once}
 	\end{subfigure}
-	\caption{Example of different processing semantics after failure recovery}
+	\caption[Example of different processing semantics after failure recovery]{Example of different processing semantics after failure recovery: only exactly-once processing can guarantee correct results}
 	\label{fig:background-processing-semantics-example}
 \end{figure}
 
-Exactly-once processing needs to be end-to-end, which means that checkpointing not only needs to consider the processing framework but also sources and sinks~\cite[p.~153]{Akidau.2018}. A persistent and immutable source is required to be able to replay the stream from the last checkpointed position~\cite[p.~1722]{Carbone.2017}. If the stream is ephemeral, only at-most-once processing might be possible since the stream cannot be restarted from the correct position. The sink needs to be either idempotent (like most databases) or support transactions (like using two-phase commits)~\cite[pp.~1725--1726]{Carbone.2017}. To enable end-to-end exactly-once processing, the persistent state consists of the actual application state, but also needs to include the position in the stream on which that application state is based. Based on these information, a recovered job can provide consistent and correct results. However, exactly-once processing is not possible due to the nature of some sources and sink, and consistent and correct results cannot be guaranteed in those cases.
+Exactly-once processing needs to be end-to-end, which means that checkpointing not only needs to consider application state but also sources and sinks. A persistent and immutable source is required to be able to replay the stream from the last checkpointed position~\cite[p.~1722]{Carbone.2017}. If the stream is ephemeral, only at-most-once processing might be possible since the stream cannot be restarted from the correct position. The sink needs to be either idempotent (like most databases) or support transactions (like using two-phase commits)~\cite[pp.~1725--1726]{Carbone.2017}. To enable end-to-end exactly-once processing, the persistent state consists of the actual application state, but also needs to include the position in the stream on which that application state is based. Based on these information, a recovered job can provide consistent and correct results. However, exactly-once processing is not possible due to the nature of some sources and sink, and consistent and correct results cannot be guaranteed in those cases.
 
 Most stream processing frameworks do not offer true exactly-once processing due to performance reasons, but rather \emph{\gls{effectively-once processing}}. This means that each record will only affect the results once, but might actually be processed multiple times in case of a job restart due to failure. This raises consistency issues, since non-deterministic operations might produce different results for the same inputs. For example, a database lookup for stream enrichment might return different data of a table has been updated in the meantime. Frameworks cope with non-determinism by checkpointing results from such transformations~\cite[pp.~155--156]{Akidau.2018} or simply assuming deterministic transformations~\cite[p.~1722]{Carbone.2017}.
 
@@ -265,25 +264,27 @@ Most stream processing frameworks do not offer true exactly-once processing due 
 \section{Stream Transport}
 Having regarded streams as a concept, we now show how streams are physically manifested, stored and transported around. A \emph{\gls{stream transport}} system is responsible for moving streams between producers, processing systems and consumers. In its simplest form, a direct TCP connection can transport records from upstream producers to downstream consumers. For low-latency applications, UDP multicasting can be used. Brokerless messaging libraries like ZeroMQ\footnote{\url{https://zeromq.org/}} implement publish/subscribe messaging on top of these network protocols. Even HTTP and RPC requests can be used to push records from producers to consumers. However, such direct messaging methods fall short in terms of delivery guarantees and fault tolerance~\cite[pp.~441--441]{Kleppmann.2017}.
 
-Message brokers like ActiveMQ\footnote{\url{http://activemq.apache.org/}}, Pulsar\footnote{\url{https://pulsar.apache.org/}} or RabbitMQ\footnote{\url{https://www.rabbitmq.com/}} provide a way to decouple producers and consumers using common protocols such as AMQP or JMS. The broker can store records durably to cope with offline or slow consumers by persisting them on disk until delivery is acknowledged. Many are also distributed for fault tolerance in case of broker node crashes. The decoupling makes record transport asynchronous, since producers do not know when a message is delivered to consumers~\cite[p.~443]{Kleppmann.2017}. Broker-centric instead of direct messaging furthermore allows multiple consumers to receive a stream without needing to change the producer, enabling organizational scalability and flexibility~\cite[pp.~20--22]{Kreps.2014} as well as debugging and monitoring by peeking into the stream~\cite[pp.~31--32]{Kreps.2014}. There are two patterns when multiple consumers receive the same stream, as illustrated in figure~\ref{fig:background-multiconsumer-patterns}~\cite[pp.~444--445]{Kleppmann.2017}. Load balancing means that each record is delivered to only one consumer, so processing load is spread over all consumers. Fan-out means that each record is delivered to all consumers, which allows for independent consumers to receive the full stream. Combinations of these two patterns using consumer groups are possible as well.
+Message brokers like ActiveMQ\footnote{\url{http://activemq.apache.org/}}, Pulsar\footnote{\url{https://pulsar.apache.org/}} or RabbitMQ\footnote{\url{https://www.rabbitmq.com/}} provide a way to decouple producers and consumers using common protocols such as AMQP or JMS. The broker can store records durably to cope with offline or slow consumers by persisting them on disk until delivery is acknowledged. Many are also distributed for fault tolerance in case of broker node crashes. The decoupling makes record transport asynchronous, since producers do not know when a message is delivered to consumers~\cite[p.~443]{Kleppmann.2017}. Broker-centric instead of direct messaging furthermore allows multiple consumers to receive a stream without needing to change the producer, enabling organizational scalability and flexibility~\cite[pp.~20--22]{Kreps.2014} as well as debugging and monitoring by peeking into the stream~\cite[pp.~31--32]{Kreps.2014}. There are two patterns when multiple consumers receive the same stream, as illustrated in figure~\ref{fig:background-multiconsumer-patterns}~\cite[pp.~444--445]{Kleppmann.2017}. Load balancing means that each record is delivered to only a single consumer, so processing load is spread over all consumers. Fan-out means that each record is delivered to all consumers, which allows for independent consumers to receive the full stream. Combinations of these two patterns are possible as well, where records are load-balanced between some consumers but others receive all records.
 
 \begin{figure}
-	\begin{subfigure}[c]{.32\textwidth}
-		\centering
-		% \includegraphics[width=0.95\textwidth]{plot_outlier_spike}%
+	\begin{subfigure}[c]{.47\textwidth}
+		\includegraphics{background_distribution_pattern_loadbalancing}%
 		\subcaption{Load balancing}
 	\end{subfigure}
-	\begin{subfigure}[c]{.32\textwidth}
-		\centering
-		% \includegraphics[width=0.95\textwidth]{plot_outlier_spike}%
+	\hfill
+	\begin{subfigure}[c]{.47\textwidth}
+		\includegraphics{background_distribution_pattern_fanout}%
 		\subcaption{Fan-out}
 	\end{subfigure}
-	\begin{subfigure}[c]{.32\textwidth}
-		\centering
-		% \includegraphics[width=0.95\textwidth]{plot_outlier_spike}%
+	
+	\medskip
+
+	\centering
+	\begin{subfigure}[c]{.47\textwidth}
+		\includegraphics{background_distribution_pattern_mixed}%
 		\subcaption{Mixed}
 	\end{subfigure}
-	\caption{Message distribution patterns with multiple consumers}
+	\caption[Message distribution patterns with multiple consumers]{Message distribution patterns with multiple consumers: the colored dots denote which consumer receives a record}
 	\label{fig:background-multiconsumer-patterns}
 \end{figure}
 
@@ -298,13 +299,12 @@ The total ordering solves the at-least-once delivery and out-of-orderness proble
 
 Durable log transportation platforms also provide an isolation layer between producers and consumers~\cites[pp.~450--450]{Kleppmann.2017}[p.~32]{Kreps.2014}. The log acts as large buffer that prevents consumers from being overwhelmed by a high volume of data by allowing consumers to read records at their own pace. Once the produced volume decreases, the consumer can catch up without needing to worry about data loss. This moves backpressure handling from the consumer to the transport layer.
 
-A stream can be divided into \emph{\glslink{log partition}{partitions}} that contain the same record types but are otherwise separate logs that can be read and written to independently from other partitions~\cite[pp.~24--26]{Kreps.2014}. This is shown in figure~\ref{fig:background-log-partitions}. Partitions enable efficient distributed logs, since each partition can be hosted on a different node for horizontal scalability without synchronization overhead. Additionally, partitions can be replicated to other nodes for fault tolerance. While each partition is totally ordered within itself, there is no global order between partitions. In practice, this is only a minor limitation since processing jobs often handle partitions independently (e.g., in keyed windows). In that case, it makes sense to use the same key for determining the log partition, since a random partition is selected by default. Partitions also enable load balancing, since each partition can be assigned to a single consumer. In that respect, partitions are the smallest unit of parallelism~\cite[p.~4]{Kreps.2011}.
+A stream can be divided into \emph{\glslink{log partition}{partitions}} that contain the same record types but are otherwise separate logs that can be read and written to independently from other partitions~\cite[pp.~24--26]{Kreps.2014}. This is shown in figure~\ref{fig:background-log-partitions}. Partitions enable efficient distributed logs, since each partition can be hosted on a different node for horizontal scalability without synchronization overhead. Additionally, partitions can be replicated to other nodes for fault tolerance. Partitions also enable load balancing, since each partition can be assigned to a single consumer. In that respect, partitions are the smallest unit of parallelism~\cite[p.~4]{Kreps.2011}. While each partition is totally ordered within itself, there is no global order between partitions. In practice, this is only a minor limitation since processing jobs often handle partitions independently (e.g., in keyed windows). In that case, it makes sense to use the same key for determining the log partition, since a random partition is selected by default.
 
 \begin{figure}
 	\centering
-	% \includegraphics[width=0.55\textwidth]{plot_background_time_skew_events}
-	FIGURE OF PARTITIONS
-	\caption[Log partitioning]{Log partitioning: each partition is an independent log with internal total order}
+	\includegraphics[width=0.8\textwidth]{background_topics_partitions}
+	\caption[Log partitioning]{Log partitioning: each partition is an independent log with internal total order. Load balancing is used as multi-consumer pattern, but multiple consumers could also read the same partition for fan-out.}
 	\label{fig:background-log-partitions}
 \end{figure}
 
