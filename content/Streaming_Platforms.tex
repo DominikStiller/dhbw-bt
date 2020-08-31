@@ -73,36 +73,30 @@ A Flink cluster comprises a client, a job manager and one or more task managers,
 
 \begin{figure}
 	\centering
-	% \includegraphics[width=0.55\textwidth]{plot_background_time_skew_events}
-    FIGURE OF FLINK ARCHITECTURE
-    % Figure 2 in Carbone.2015
+	\includegraphics[width=\textwidth]{platforms_flink_cluster}
 	\caption[Cluster architecture of Flink]{Cluster architecture of Flink: jobs running on task managers are coordinated by a job manager}
 	\label{fig:platforms-flink-cluster}
 \end{figure}
 
-While the dataflow graph shows the logical structure of the job, it is parallelized for physical execution. Operators are split into one or more parallel instances called \emph{subtasks}, and streams are split into one or more partitions. The degree of parallelism can be defined for each operator. Parallelization results in two types of inter-operator stream distribution patterns, as shown in figure~\ref{fig:platforms-flink-parallel-dataflow}. Redistribution is necessary in case two subsequent operators do not have the same number of subtask, or when streams need to be shuffled after a \texttt{keyBy} operation. \emph{Network shuffling} denotes the routing of records to a different task slot (possibly on a different node) since records with the same key need to be processed by the same subtask. Subsequent operators with the same number of subtasks and without shuffling result in one-to-one streams and the stream partitioning can be preserved. Some subsequent operators like two \texttt{map} transformations can also be chained to run in the same thread, which reduces the overhead of inter-thread buffering to improve throughput and latency. A \emph{task} comprises either a subtask chain or an individual unchained subtask. Multiple successive tasks can occupy the same task slot through \emph{slot sharing}, which allows to run one parallel instance of the whole pipeline in one task slot. This yields better resource utilization and limits the number of required task slots to the maximum degree of parallism of a job. The relationship between subtasks, tasks and task slots is shown in figure~\ref{fig:platforms-flink-tasks}.
+While the dataflow graph shows the logical structure of the job, it is parallelized for physical execution. This is shown in figure~\ref{fig:platforms-flink-dataflow}. Operators are split into one or more parallel instances called \emph{subtasks}, and streams are split into one or more partitions. The degree of parallelism can be defined for each operator. Parallelization results in two types of inter-operator stream distribution patterns. Redistribution is necessary in case two subsequent operators do not have the same number of subtask, or when streams need to be shuffled after a \texttt{keyBy} operation. \emph{Network shuffling} denotes the routing of records to a different task slot (possibly on a different node) since records with the same key need to be processed by the same subtask. Subsequent operators with the same number of subtasks and without shuffling result in one-to-one streams and the stream partitioning can be preserved. Some subsequent operators like two \texttt{map} transformations can also be chained to run in the same thread, which reduces the overhead of inter-thread buffering to improve throughput and latency. A \emph{task} comprises either a subtask chain or an individual unchained subtask. Multiple successive tasks can occupy the same task slot through \emph{slot sharing}, which allows to run one parallel instance of the whole pipeline in one task slot. This yields better resource utilization and limits the number of required task slots to the maximum degree of parallism of a job.
 
 \begin{figure}
-	\centering
-	% \includegraphics[width=0.55\textwidth]{plot_background_time_skew_events}
-    FIGURE OF PARALLEL DATAFLOW
-    % https://ci.apache.org/projects/flink/flink-docs-release-1.10/concepts/programming-model.html#parallel-dataflows
-    % also show chaining
-	\caption[Logical and physical view of parallel dataflow graph]{Logical and physical view of parallel dataflow graph: partitioning may require stream redistribution}
-	\label{fig:platforms-flink-parallel-dataflow}
-\end{figure}
+	\begin{subfigure}[c]{\textwidth}
+		\includegraphics[width=\textwidth]{platforms_flink_dataflow_condensed}%
+		\subcaption{Condensed view}
+		\label{fig:platforms-flink-dataflow-condensed}
+	\end{subfigure}
+	
+	\bigskip
 
-\begin{figure}
-	\centering
-	% \includegraphics[width=0.55\textwidth]{plot_background_time_skew_events}
-    FIGURE OF SUBTASKS, TASKS AND SLOT sharing
-	% https://ci.apache.org/projects/flink/flink-docs-release-1.10/concepts/runtime.html#task-slots-and-resources
-	% https://ci.apache.org/projects/flink/flink-docs-release-1.11/internals/job_scheduling.html#scheduling
-    % use same example as above
-	\caption[Relationship of subtasks, tasks and task slots]{Relationship of subtasks, tasks and task slots: every task slot can host one parallel instance of the whole pipeline}
-	\label{fig:platforms-flink-tasks}
+	\begin{subfigure}[c]{\textwidth}
+		\includegraphics[width=\textwidth]{platforms_flink_dataflow_parallel}%
+		\subcaption{Parallel view}
+		\label{fig:platforms-flink-dataflow-parallel}
+	\end{subfigure}
+	\caption[Logical and physical view of parallel dataflow graph]{Logical and physical view of parallel dataflow graph: subtasks are parallel operator instances with one-to-one or redistribution streams on between. Each parallel pipeline of tasks can occupy the same task slot, with each subtask (chain) running in a separate thread.}
+	\label{fig:platforms-flink-dataflow}
 \end{figure}
-
 
 \subsubsection{State and Checkpointing}
 Many operations like windowing and pattern recognition require state. Instead of storing the state in memory, state can be stored in the cluster so it can participate in checkpointing for fault tolerance. Flink provides interfaces to declare value, list and map states with optional time-to-live. State in operators can either be scoped to a key or a whole subtask. Broadcast state is available to all subtasks and is often used to update rules for alerting or parameters for machine learning. State can also be queried from the outside. Flink supports three state backends, which determine where state is stored. The memory state backend stores state in the job manager's memory and is only recommended during development. The file system and RocksDB backends write state to disk. Since this state is stored locally and maintained in memory as well if possible, performance is usually not impacted much. RocksDB allows keeping very large state and is recommended for production.
