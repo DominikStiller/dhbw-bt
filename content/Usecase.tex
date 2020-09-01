@@ -24,7 +24,9 @@ The HFP API is accessible through a single MQTT broker~\cite{HelsinkiRegionalTra
 \end{itemize}
 The JSON payload differs slightly between events, but usually contains an event timestamp, geographical coordinates (latitude and longitude), heading, speed, acceleration, as well as route and vehicle information. Some examples are shown in appendix~\ref{sec:appendix-input-events} Because vehicles are operated by different contractors, vehicles can only be uniquely identified by the combination of operator and vehicle number.
 
-The volume of events over the course of a day is shown in figure~\ref{fig:usecase-hsl-daily-volume}. The volume is very low during the night and starts to increase after 05:00 with a first peak at 08:05 (1081 events per second). The volume remains steady until the second peak at 16:08 (1123 events per second), after which the volume slowly abates during the evening. This amounts to 58.4 million events per day. The delay between events occuring in the real world (event timestamp) and the timestamp of arrival at the ingestion component over the course of a minute is shown in figure~\ref{fig:usecase-hsl-ingestion-lag}. Note that this is only partially the event-time skew/processing-time lag, since these metrics are defined using the timestamp of arrival at the \emph{processing} component. Most of the events actually have a negative delay, which is implausible since it would mean that events are ingested before they happen. This is probably due to clock synchronization issues between the vehicles and our system (we synchronize the system time of our EC2 instances using NTP as recommended by AWS). However, this does not affect correctnes or latency, since all processing is done in event time. Of more significance is the high tail delay, with some events only arriving after more than \SI{30}{\second}. This confirms the need for explicit event-time processing, where we can explicitly treat these events as late. With processing-time ordering, they would end up in the wrong window. 
+The volume of events over the course of a day is shown in figure~\ref{fig:usecase-hsl-daily-volume}. The volume is very low during the night and starts to increase after 05:00 with a first peak at 08:05 (1081 events per second). The volume remains steady until the second peak at 16:08 (1123 events per second), after which the volume slowly abates during the evening. This amounts to 58.4 million events per day.
+
+The delay between events occuring in the real world (event timestamp) and the timestamp of arrival at the ingestion component over the course of a minute is shown in figure~\ref{fig:usecase-hsl-ingestion-lag}. Note that this is only partially the event-time skew/processing-time lag, since these metrics are defined using the timestamp of arrival at the \emph{processing} component. Most of the events actually have a negative delay, which is implausible since it would mean that events are ingested before they happen. This is probably due to clock synchronization issues between the vehicles and our system (we synchronize the system time of our EC2 instances using NTP as recommended by AWS). However, this does not affect correctnes or latency, since all processing is done in event time. Of more significance is the high tail delay, with some events only arriving after more than \SI{30}{\second}. This confirms the need for explicit event-time processing, where we can explicitly treat these events as late. With processing-time ordering, they would end up in the wrong window. 
 
 \begin{figure}
 	\centering
@@ -58,32 +60,31 @@ All analytics jobs use watermark-based completeness triggers and value output mo
 
 \begin{figure}
     \centering
-	\begin{subfigure}[c]{0.33\textwidth}
-        \centering
-        \includegraphics[width=0.95\textwidth]{plot_usecase_analytics_emergency_stop}%
+	\begin{subfigure}[c]{0.30\textwidth}
+        \includegraphics[width=\textwidth]{usecase_analytics_vehicledist}%
 		\subcaption{Vehicle distribution}
-	\end{subfigure}%
-	\begin{subfigure}[c]{0.33\textwidth}
-        \centering
-        \includegraphics[width=0.95\textwidth]{plot_usecase_analytics_emergency_stop}%
+    \end{subfigure}%
+    \hfill
+	\begin{subfigure}[c]{0.30\textwidth}
+        \includegraphics[width=\textwidth]{usecase_analytics_delaydist}%
 		\subcaption{Delay distribution}
 	\end{subfigure}%
-	\begin{subfigure}[c]{0.33\textwidth}
+    \hfill
+	\begin{subfigure}[c]{0.30\textwidth}
         \centering
-        \includegraphics[width=0.95\textwidth]{plot_usecase_analytics_emergency_stop}%
+        \includegraphics[width=\textwidth]{usecase_analytics_finalstopdist}%
 		\subcaption{Final stop distribution}
     \end{subfigure}
-
+    
     \bigskip
     
-	\begin{subfigure}[c]{0.33\textwidth}
-        \centering
-        \includegraphics[width=0.95\textwidth]{plot_usecase_analytics_emergency_stop}%
+	\begin{subfigure}[c]{0.30\textwidth}
+        \includegraphics[width=\textwidth]{usecase_analytics_flowdir}%
 		\subcaption{Flow direction}
 	\end{subfigure}%
-	\begin{subfigure}[c]{0.33\textwidth}
-		\centering
-		\includegraphics[width=0.95\textwidth]{plot_usecase_analytics_emergency_stop}%
+    \hfill
+	\begin{subfigure}[c]{0.60\textwidth}
+		\includegraphics[width=\textwidth]{plot_usecase_analytics_emergency_stop}%
 		\subcaption{Emergency stop detection}
 	\end{subfigure}
 	\caption{Analytics for public transportation}
