@@ -83,7 +83,7 @@ All analytics jobs use watermark-based completeness triggers and value output mo
 		\subcaption{Flow direction}
 	\end{subfigure}%
     \hfill
-	\begin{subfigure}[c]{0.60\textwidth}
+	\begin{subfigure}[c]{0.65\textwidth}
 		\includegraphics[width=\textwidth]{plot_usecase_analytics_emergency_stop}%
 		\subcaption{Emergency stop detection}
 	\end{subfigure}
@@ -100,9 +100,9 @@ H3 has bindings for all languages that we use in our solution (Java, Python and 
 
 
 
-\section{Data Flow Example}
-\label{sec:usecase-dataflow}
-To better understand the data flow through and interaction of components of our solution, we now look at an end-to-end example and trace the route of a vehicle position event from the HFP API until its visualization as part of the vehicle distribution job. Use the architecture from figure~\ref{fig:solution-architecture} as reference.
+\section{Stream Flow Example}
+\label{sec:usecase-streamflow}
+To better understand the stream flow through and interaction of components of our solution, we now look at an end-to-end example and trace the route of a vehicle position event from the HFP API until its visualization as part of the vehicle distribution job. Use the architecture from figure~\ref{fig:solution-architecture} as reference.
 
 The ingestion component is the component interfacing with the HSL MQTT broker. When it is first started, the component creates an MQTT connector which subscribes to the \texttt{/hfp/v2/journey/ongoing/vp/\#} topic to receive vehicle positions (the \texttt{\#} is a wildcard supported by the HSL broker since the actual topic is much more elaborate). An example of a vehicle position event as it is produced by the MQTT API is shown in listing~\ref{lst:appendix-event-vp-raw}. This event is processed by the respective processor which extracts the event timestamp and all other relevant information to build a protobuf message. This message is then wrapped in the common event schema and serialized. While we normally use the much more compact binary format (\SI{150}{\byte} on average), the JSON variant shown in listing~\ref{lst:appendix-event-vp-protobuf} (\SI{450}{\byte} on average using UTF-8 without indentation) is very useful for debugging and can be used interchangeably (compare with the schema definition from listing~\ref{lst:solution-protobuf-event-schema}). Note how the message contains the nested type, which enables type-safe deserialization, and the ingestion timestamp is added. The event leaves the ingestion component when it is written to the Kafka topic \texttt{input.vehicle-position} for all vehicle position events. Examples for all three input event types that we use (vehicle position, arrival, departure) can be found in appendix~\ref{sec:appendix-input-events}.
 
@@ -124,8 +124,7 @@ The visualization component shows the vehicle distribution to the user. The back
 
 \begin{figure}
 	\centering
-    % \includegraphics[width=\textwidth]{plot_hsl_daily_event_volume}
-    FIGURE OF VISUALIZATION MAP
-    \caption[Visualization on map with geocells]{Visualization on map with geocells: each geocell is shaded according to its vehicle count in real-time}
+    \includegraphics[width=\textwidth]{usecase_map}
+    \caption[Visualization of vehicle distribution on map]{Visualization of vehicle distribution on map: each geocell is shaded according to its vehicle count in real-time}
     \label{fig:usecase-map}
 \end{figure}
