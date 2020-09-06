@@ -1,3 +1,4 @@
+%Background
 \newglossaryentry{node}{
 	name={node},
 	description={an individual server in a cluster}
@@ -169,6 +170,84 @@
 \newglossaryentry{event pattern}{
 	name={event pattern},
 	description={a template that specifies one or more combinations of events to for \gls{pattern recognition}}
+}
+
+% Streaming Platforms
+\newglossaryentry{broker}{
+	name={broker},
+	description={a node in a Kafka cluster}
+}
+\newglossaryentry{topic}{
+	name={topic},
+	description={a \gls{stream} of common \glslink{primitive event}{event} types within Kafka, can consists of multiple \glslink{log partition}{partition}}
+}
+\newglossaryentry{partition leader}{
+	name={partition leader},
+	description={the primary \gls{broker} of a \glslink{log partition}{partition} which handles reads and writes}
+}
+\newglossaryentry{follower replica}{
+	name={follower replica},
+	description={secondary \glspl{broker} that have a copy of a \glslink{log partition}{partition} and can become leader in case of leader failure}
+}
+\newglossaryentry{consumer group}{
+	name={consumer group},
+	description={Kafka's mechanism for multi-\glslink{stream consumer}{consumer} distribution patterns, topic \glslink{log partition}{partitions} are assigned to a single \glslink{stream consumer}{consumer} within a consumer group}
+}
+\newglossaryentry{bootstrap server}{
+	name={bootstrap server},
+	description={the \gls{broker} that clients connect to initially to discover the cluster}
+}
+\newglossaryentry{job manager}{
+	name={job manager},
+	description={the managing component in a Flink cluster responsible for deploying \glspl{task} and triggering checkpoints}
+}
+\newglossaryentry{task manager}{
+	name={task manager},
+	description={the executing component in a Flink cluster responsible for running \glspl{task}}
+}
+\newglossaryentry{per-job cluster}{
+	name={per-job cluster},
+	description={a Flink cluster mode where each \gls{job} runs on a dedicated cluster}
+}
+\newglossaryentry{session cluster}{
+	name={session cluster},
+	description={a Flink cluster mode where \glspl{job} share the same cluster}
+}
+\newglossaryentry{task slot}{
+	name={task slot},
+	description={a slot within a \gls{task manager} which a \gls{task} can run in}
+}
+\newglossaryentry{subtask}{
+	name={subtask},
+	description={a parallel instance of an \gls{operator} in a Flink \gls{dataflow graph}}
+}
+\newglossaryentry{network shuffling}{
+	name={network shuffling},
+	description={distribution of \glspl{record} to other task managers after certain \glspl{operator} like \texttt{keyBy}}
+}
+\newglossaryentry{task}{
+	name={task},
+	description={a single \gls{subtask} or chain of \glspl{subtask} that runs in a single thread}
+}
+\newglossaryentry{savepoint}{
+	name={savepoint},
+	description={a manually triggered \glslink{checkpointing}{checkpoint} of a Flink \gls{job} used for updates or migrations}
+}
+
+% Use Case
+\newglossaryentry{geocell}{
+	name={geocell},
+	description={a cell of a discrete grid which partitions the continuous space of geographical coordinates}
+}
+
+% Evaluation
+\newglossaryentry{end-to-end latency}{
+	name={end-to-end latency},
+	description={the delay between an \glslink{primitive event}{event} being observed by the system and results based on that \glslink{primitive event}{event} becoming visible}
+}
+\newglossaryentry{latency marker}{
+	name={latency marker},
+	description={a special \gls{record} used for latency tracking}
 }
 
 % \newglossaryentry{}{

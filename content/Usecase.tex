@@ -27,14 +27,14 @@ The volume of events over the course of a day is shown in figure~\ref{fig:usecas
 
 The delay between events occuring in the real world (event timestamp) and the timestamp of arrival at the ingestion component over the course of a minute is shown in figure~\ref{fig:usecase-hsl-ingestion-lag}. Note that this is not the same as the event-time skew/processing-time lag, since these metrics are defined using the timestamp of arrival at the processing component. The ingestion lag is only part of the event-time skew. Most of the events actually have a negative delay, which is implausible since it would mean that events are ingested before they happen. This is probably due to clock synchronization issues between the vehicles and our system (we synchronize the system time of our EC2 instances using NTP as recommended by AWS). However, this does not affect correctness or latency, since all processing is done in event time. Of more significance is the high tail delay, with some events only arriving after more than \SI{30}{\second}. This confirms the need for explicit event-time processing, where we can explicitly treat these events as late. With processing-time ordering, they would end up in the wrong window. Additionally, the watermark should disregard the long tail to keep latency low.
 
-\begin{figure}[h]
+\begin{figure}[ht]
 	\centering
 	\includegraphics[width=\textwidth]{plot_hsl_daily_event_volume}
 	\caption[Daily event volume of the HSL HFP API]{Daily event volume of the HSL HFP API: the volume is the highest during rush hour}
 	\label{fig:usecase-hsl-daily-volume}
 \end{figure}
 
-\begin{figure}[h]
+\begin{figure}[ht]
 	\centering
 	\includegraphics[width=\textwidth]{plot_hsl_ingestion_lag}
 	\caption[Ingestion lag of the HSL HFP API]{Delay between the occurrence of events from the HSL HFP API and their arrival at the ingestion component over time (min: \SI{-542}{\milli\second}, median: \SI{-465}{\milli\second}, 90th percentile: \SI{-120}{\milli\second}, 99th percentile: \SI{9279}{\milli\second}, max: \SI{34684}{\milli\second})}
@@ -46,7 +46,7 @@ The delay between events occuring in the real world (event timestamp) and the ti
 
 
 \section{Analytics}
-We decided on five analytics based on the HFP data, visualized in figure~\ref{fig:usecase-analytics}. Each of the five jobs covers different aspects of stream analytics and therefore allow us to evaluate multiple scenarios. All analytics jobs produce their results to a separate Kafka topic. Most analytics divide the city of Helsinki into a grid of \emph{geocells} of equal size and calculate aggregates for each cell, resulting in a geographical distribution for the analytics when observing the results for all geocells.
+We decided on five analytics based on the HFP data, visualized in figure~\ref{fig:usecase-analytics}. Each of the five jobs covers different aspects of stream analytics and therefore allow us to evaluate multiple scenarios. All analytics jobs produce their results to a separate Kafka topic. Most analytics divide the city of Helsinki into a grid of \emph{\glspl{geocell}} of equal size and calculate aggregates for each cell, resulting in a geographical distribution for the analytics when observing the results for all geocells.
 \begin{description}
     \item[Vehicle distribution] Calculates the number of vehicles per geocell in the last \SI{30}{\second}. First, key the vehicle position stream by vehicle and apply a sliding window of \SI{30}{\second} evaluated every \SI{5}{\second} with a window evictor for duplicate events. This deduplication is necessary because each vehicle sends their position every second but we are only interested in the last position within the window, otherwise we would count each vehicle 30 times. Then, key the deduplicated stream by geocell and count the number of vehicles per geocell.
     \item[Delay distribution] Calculates delay statistics (median, 90th and 99th percentile) per geocell in the last \SI{5}{\minute}. First, calculate the difference between the scheduled and actual arrival for every record in the arrival event stream in minutes (scheduled arrivals are only provided with minute resolution). Then, apply a sliding window of \SI{5}{\minute} evaluated every \SI{5}{\second} and calculate the statistics for all arrivals within the window. No deduplication is necessary because we are interested in every arrival event.
