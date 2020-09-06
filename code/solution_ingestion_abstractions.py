@@ -1,4 +1,4 @@
-class Connector:
+class Connector(AbstractBaseClass):
    def __init__(self, config, processor):
       # Set up connector
 
@@ -8,14 +8,14 @@ class Connector:
       for raw_event in external_source:
          if topic, event_timestamp, details
                := processor.process(raw_event):
-            self._ingest(topic, build_event(event_timestamp, details)
+            self._ingest(topic, build_base_event(event_timestamp, details)
 
    @final
-   def _ingest(self, topic, event):
-      produce_to_kafka(topic, serialize(event))
+   def _ingest(self, topic, base_event):
+      produce_to_kafka(topic, serialize(base_event))
 
 
-class Processor:
+class Processor(AbstractBaseClass):
    def __init__(self, config):
       # Set up processor
 
